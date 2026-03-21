@@ -1513,6 +1513,11 @@ body::before {
                 <input class="config-input" type="text" id="cfg-freq" style="width:100%"
                   placeholder="https://seu-n8n.app.n8n.cloud/webhook/atualizar-frequencia">
               </div>
+              <div class="form-group">
+                <label class="form-label">URL Webhook Histórico</label>
+                <input class="config-input" type="text" id="cfg-historico" style="width:100%"
+                  placeholder="https://seu-n8n.app.n8n.cloud/webhook/historico">
+              </div>
               <div class="config-row">
                 <div><div class="cr-label">Modo Demo (Mock Data)</div><div class="cr-desc">Usa dados simulados quando API falha</div></div>
                 <div class="toggle" id="toggle-demo" onclick="toggleDemo(this)"></div>
@@ -1615,6 +1620,7 @@ const CFG = {
   webhookUrl: localStorage.getItem('cfg_webhook') || '',
   aprenderUrl: localStorage.getItem('cfg_aprender') || '',
   freqUrl: localStorage.getItem('cfg_freq') || '',
+  historicoUrl: localStorage.getItem('cfg_historico') || '',
   demoMode: localStorage.getItem('cfg_demo') === 'true',
   limiRec: parseInt(localStorage.getItem('cfg_rec') || '3'),
   limiSurto: parseInt(localStorage.getItem('cfg_surto') || '5'),
@@ -1625,18 +1631,15 @@ const CFG = {
 // Banco de dados real (começa vazio, carregado do Supabase)
 let BANCO_REAL = [];
 
-// Buscar dados reais do Supabase
+// Buscar dados reais via n8n webhook
 async function carregarDoSupabase() {
-  if (!CFG.sbUrl || !CFG.sbKey) return false;
+  const url = CFG.historicoUrl || '';
+  if (!url) return false;
   try {
-    const res = await fetch(`${CFG.sbUrl}/rest/v1/problemas?select=*&order=frequencia.desc&limit=500`, {
-      headers: {
-        'apikey': CFG.sbKey,
-        'Authorization': `Bearer ${CFG.sbKey}`
-      }
-    });
+    const res = await fetch(url);
     if (!res.ok) return false;
-    const dados = await res.json();
+    const json = await res.json();
+    const dados = json.dados || json;
     if (Array.isArray(dados) && dados.length > 0) {
       BANCO_REAL = dados;
       localStorage.setItem('inframind_cache', JSON.stringify(dados));
@@ -2290,6 +2293,7 @@ function loadConfigUI() {
   document.getElementById('cfg-webhook').value = CFG.webhookUrl || '';
   document.getElementById('cfg-aprender').value = CFG.aprenderUrl || '';
   document.getElementById('cfg-freq').value = CFG.freqUrl || '';
+  document.getElementById('cfg-historico').value = CFG.historicoUrl || '';
   document.getElementById('cfg-rec').value = CFG.limiRec;
   document.getElementById('cfg-surto').value = CFG.limiSurto;
   document.getElementById('cfg-sb-url').value = CFG.sbUrl || '';
@@ -2302,6 +2306,7 @@ function salvarConfig() {
   CFG.webhookUrl = document.getElementById('cfg-webhook').value.trim();
   CFG.aprenderUrl = document.getElementById('cfg-aprender').value.trim();
   CFG.freqUrl = document.getElementById('cfg-freq').value.trim();
+  CFG.historicoUrl = document.getElementById('cfg-historico').value.trim();
   CFG.limiRec = parseInt(document.getElementById('cfg-rec').value || '3');
   CFG.limiSurto = parseInt(document.getElementById('cfg-surto').value || '5');
   CFG.sbUrl = document.getElementById('cfg-sb-url').value.trim();
@@ -2310,6 +2315,7 @@ function salvarConfig() {
   localStorage.setItem('cfg_webhook', CFG.webhookUrl);
   localStorage.setItem('cfg_aprender', CFG.aprenderUrl);
   localStorage.setItem('cfg_freq', CFG.freqUrl);
+  localStorage.setItem('cfg_historico', CFG.historicoUrl);
   localStorage.setItem('cfg_rec', CFG.limiRec);
   localStorage.setItem('cfg_surto', CFG.limiSurto);
   localStorage.setItem('cfg_sb_url', CFG.sbUrl);
@@ -2333,14 +2339,14 @@ function salvarConfig() {
 
   toast('Configuração salva!', 'success');
 
-  // Recarregar dados do Supabase se tiver URL e Key
-  if (CFG.sbUrl && CFG.sbKey) {
+  // Recarregar dados via n8n se tiver URL configurada
+  if (CFG.historicoUrl) {
     carregarDoSupabase().then(ok => {
       if (ok) {
-        toast(`✅ ${BANCO_REAL.length} registros carregados do Supabase!`, 'success');
+        toast(`✅ ${BANCO_REAL.length} registros carregados!`, 'success');
         renderDashboard();
       } else {
-        toast('Não foi possível conectar ao Supabase. Verifique URL e Key.', 'warn');
+        toast('Não foi possível carregar os dados. Verifique a URL do Histórico.', 'warn');
       }
     });
   }
@@ -2439,8 +2445,8 @@ function refreshData() {
 (function init() {
   verificarSessao();
 
-  // Carregar dados do Supabase se configurado
-  if (CFG.sbUrl && CFG.sbKey) {
+  // Carregar dados via n8n se configurado
+  if (CFG.historicoUrl) {
     carregarDoSupabase().then(ok => {
       if (ok) renderDashboard();
     });
