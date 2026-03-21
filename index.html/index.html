@@ -1446,6 +1446,7 @@ body::before {
                 <th onclick="sortHistorico('frequencia')">Freq ⇅</th>
                 <th onclick="sortHistorico('sucesso')">Sucesso ⇅</th>
                 <th onclick="sortHistorico('data')">Data ⇅</th>
+                <th>Ação</th>
               </tr>
             </thead>
             <tbody id="hist-tbody">
@@ -1514,7 +1515,7 @@ body::before {
               </div>
               <div class="config-row">
                 <div><div class="cr-label">Modo Demo (Mock Data)</div><div class="cr-desc">Usa dados simulados quando API falha</div></div>
-                <div class="toggle on" id="toggle-demo" onclick="toggleDemo(this)"></div>
+                <div class="toggle" id="toggle-demo" onclick="toggleDemo(this)"></div>
               </div>
               <button class="btn-save" onclick="salvarConfig()">Salvar Configuração</button>
             </div>
@@ -1614,7 +1615,7 @@ const CFG = {
   webhookUrl: localStorage.getItem('cfg_webhook') || '',
   aprenderUrl: localStorage.getItem('cfg_aprender') || '',
   freqUrl: localStorage.getItem('cfg_freq') || '',
-  demoMode: localStorage.getItem('cfg_demo') !== 'false',
+  demoMode: localStorage.getItem('cfg_demo') === 'true',
   limiRec: parseInt(localStorage.getItem('cfg_rec') || '3'),
   limiSurto: parseInt(localStorage.getItem('cfg_surto') || '5'),
   sbUrl: localStorage.getItem('cfg_sb_url') || '',
@@ -2168,6 +2169,9 @@ function filtrarHistorico() {
       <td style="font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap">
         ${new Date(r.data).toLocaleDateString('pt-BR')}
       </td>
+      <td>
+        <button onclick="deletarRegistro('${r.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;font-family:var(--mono);transition:all .15s" onmouseover="this.style.background='rgba(239,68,68,.25)'" onmouseout="this.style.background='rgba(239,68,68,.1)'">✕ Apagar</button>
+      </td>
     </tr>`).join('');
 }
 
@@ -2175,6 +2179,38 @@ function sortHistorico(field) {
   if (histSortField === field) histSortAsc = !histSortAsc;
   else { histSortField = field; histSortAsc = false; }
   filtrarHistorico();
+}
+
+async function deletarRegistro(id) {
+  if (!confirm('Tem certeza que quer apagar este registro?')) return;
+
+  // Tentar deletar no Supabase
+  let ok = false;
+  if (CFG.sbUrl && CFG.sbKey) {
+    try {
+      const res = await fetch(`${CFG.sbUrl}/rest/v1/problemas?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': CFG.sbKey,
+          'Authorization': `Bearer ${CFG.sbKey}`
+        }
+      });
+      ok = res.ok;
+    } catch(e) {}
+  }
+
+  // Remover local também
+  const idx = MOCK_BANCO.findIndex(r => r.id === id);
+  if (idx !== -1) MOCK_BANCO.splice(idx, 1);
+  const idx2 = BANCO_REAL.findIndex(r => r.id === id);
+  if (idx2 !== -1) BANCO_REAL.splice(idx2, 1);
+
+  // Atualizar cache
+  localStorage.setItem('inframind_cache', JSON.stringify(getBanco()));
+
+  toast(ok ? 'Registro apagado do banco!' : 'Registro removido localmente.', 'success');
+  filtrarHistorico();
+  renderDashboard();
 }
 
 /* ═══════════════════════════════════════════════════
@@ -2281,7 +2317,7 @@ function salvarConfig() {
 
   const isDemo = document.getElementById('toggle-demo').classList.contains('on');
   CFG.demoMode = isDemo;
-  localStorage.setItem('cfg_demo', String(!isDemo));
+  localStorage.setItem('cfg_demo', String(isDemo));
 
   const modeEl = document.getElementById('st-mode-label');
   const modeDot = document.getElementById('st-mode');
