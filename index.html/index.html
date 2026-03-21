@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InfraMind — Sistema de Memória Inteligente</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════
+   RESET + TOKENS
+════════════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:        #080d14;
+  --bg1:       #0c1220;
+  --bg2:       #101826;
+  --bg3:       #141e30;
+  --bg4:       #1a2538;
+  --line:      rgba(255,255,255,.06);
+  --line2:     rgba(255,255,255,.10);
+  --blue:      #2d8cf0;
+  --blue2:     #1a6fcc;
+  --blue-glow: rgba(45,140,240,.18);
+  --cyan:      #00d4ff;
+  --cyan-dim:  rgba(0,212,255,.12);
+  --red:       #ff3b3b;
+  --red-dim:   rgba(255,59,59,.12);
+  --green:     #00e676;
+  --green-dim: rgba(0,230,118,.12);
+  --yellow:    #ffb800;
+  --yellow-dim:rgba(255,184,0,.12);
+  --text:      #d8e4f0;
+  --text2:     #8fa3bc;
+  --text3:     #4a6078;
+  --mono:      'IBM Plex Mono', monospace;
+  --cond:      'Barlow Condensed', sans-serif;
+  --body:      'Barlow', sans-serif;
+  --sidebar-w: 220px;
+  --header-h:  56px;
+}
+
+html { font-size: 14px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg1); }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+/* ════════════════════════════════════════════
+   LAYOUT SHELL
+════════════════════════════════════════════ */
+#app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ════════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════════ */
+#sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg1);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 100;
+  position: relative;
+}
+
+.sidebar-logo {
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.logo-icon {
+  width: 28px; height: 28px;
+  background: var(--blue);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(45,140,240,.5);
+}
+.logo-text {
+  font-family: var(--cond);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: var(--text);
+}
+.logo-ver {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text3);
+  margin-left: auto;
+}
+
+.sidebar-section {
+  padding: 16px 12px 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  margin: 1px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  position: relative;
+  user-select: none;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active {
+  background: var(--blue-glow);
+  color: var(--blue);
+  border: 1px solid rgba(45,140,240,.2);
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: -8px; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 18px;
+  background: var(--blue);
+  border-radius: 0 2px 2px 0;
+}
+.nav-icon { font-size: 15px; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 999px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+}
+.sys-status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+}
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse-dot 2s ease-in-out infinite; }
+.status-dot.off { background: var(--red); }
+.status-dot.warn { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ════════════════════════════════════════════
+   MAIN AREA
+════════════════════════════════════════════ */
+#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* HEADER */
+#header {
+  height: var(--header-h);
+  background: var(--bg1);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.page-title {
+  font-family: var(--cond);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.header-search {
+  flex: 1;
+  max-width: 340px;
+  position: relative;
+}
+.header-search input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 12px 6px 32px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s;
+}
+.header-search input::placeholder { color: var(--text3); }
+.header-search input:focus { border-color: var(--blue); }
+.header-search .s-icon {
+  position: absolute;
+  left: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: var(--text3);
+  pointer-events: none;
+}
+
+.header-pills { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.h-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text2);
+}
+.h-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+.h-pill .dot.g { background: var(--green); box-shadow: 0 0 5px var(--green); animation: pulse-dot 2s ease-in-out infinite; }
+.h-pill .dot.r { background: var(--red); }
+
+.btn-icon {
+  width: 32px; height: 32px;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 15px;
+  transition: all .15s;
+  user-select: none;
+}
+.btn-icon:hover { background: var(--bg4); border-color: var(--line2); }
+
+/* CONTENT AREA */
+#content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+}
+
+/* PAGES */
+.page { display: none; animation: fadeIn .25s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+/* ════════════════════════════════════════════
+   DASHBOARD PAGE
+════════════════════════════════════════════ */
+.page-pad { padding: 24px; }
+.page-pad-tight { padding: 0 24px 24px; }
+
+/* Metric cards row */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.metric-card {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.metric-card:hover { border-color: var(--line2); }
+.metric-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 0 0 8px 8px;
+}
+.metric-card.blue::after { background: linear-gradient(90deg, transparent, var(--blue), transparent); }
+.metric-card.green::after { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+.metric-card.red::after { background: linear-gradient(90deg, transparent, var(--red), transparent); }
+.metric-card.yellow::after { background: linear-gradient(90deg, transparent, var(--yellow), transparent); }
+.metric-card.cyan::after { background: linear-gradient(90deg, transparent, var(--cyan), transparent); }
+
+.mc-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+.mc-value {
+  font-family: var(--cond);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.mc-value.blue { color: var(--blue); }
+.mc-value.green { color: var(--green); }
+.mc-value.red { color: var(--red); }
+.mc-value.yellow { color: var(--yellow); }
+.mc-value.cyan { color: var(--cyan); }
+.mc-sub {
+  font-size: 11px;
+  color: var(--text3);
+}
+.mc-icon {
+  position: absolute;
+  top: 14px; right: 14px;
+  font-size: 20px;
+  opacity: .3;
+}
+
+/* Dashboard grid */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.dash-card {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.dash-card.full { grid-column: 1/-1; }
+.dc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.dc-title {
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+.dc-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.dc-body { padding: 16px; }
+
+/* Alert banner */
+.alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 7px;
+  margin-bottom: 12px;
+  border-left: 3px solid;
+  animation: slideIn .3s ease;
+}
+@keyframes slideIn { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:none; } }
+.alert-banner.red { background: var(--red-dim); border-color: var(--red); }
+.alert-banner.yellow { background: var(--yellow-dim); border-color: var(--yellow); }
+.alert-banner.blue { background: var(--blue-glow); border-color: var(--blue); }
+.ab-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.ab-title { font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+.ab-msg { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+/* Activity list */
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.activity-item:last-child { border-bottom: none; }
+.ai-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ai-text { flex: 1; color: var(--text2); }
+.ai-text strong { color: var(--text); font-weight: 600; }
+.ai-time { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+
+/* Category bars */
+.cat-bar-item {
+  margin-bottom: 12px;
+}
+.cat-bar-item:last-child { margin-bottom: 0; }
+.cb-info { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; }
+.cb-name { color: var(--text2); }
+.cb-count { font-family: var(--mono); color: var(--text3); }
+.cb-track {
+  height: 5px;
+  background: var(--bg4);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.cb-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 1.2s cubic-bezier(.16,1,.3,1);
+  width: 0;
+}
+
+/* ════════════════════════════════════════════
+   ANÁLISE PAGE
+════════════════════════════════════════════ */
+.analise-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 24px;
+}
+.analise-card {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.analise-card.full { grid-column: 1/-1; }
+
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.form-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--body);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  resize: none;
+}
+.form-input::placeholder { color: var(--text3); }
+.form-input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(45,140,240,.1);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: var(--blue);
+  border: none;
+  border-radius: 6px;
+  font-family: var(--cond);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #fff;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary:hover { background: var(--blue2); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(45,140,240,.35); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-primary .btn-spinner { display: none; }
+.btn-primary.loading .btn-text { display: none; }
+.btn-primary.loading .btn-spinner { display: inline-block; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+}
+
+/* Sugestão cards */
+.sugestao-card {
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px;
+  margin-bottom: 10px;
+  transition: border-color .2s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.sugestao-card:hover { border-color: var(--line2); }
+.sugestao-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+}
+.sugestao-card.rank-1::before { background: var(--blue); }
+.sugestao-card.rank-2::before { background: var(--cyan); }
+.sugestao-card.rank-3::before { background: var(--text3); }
+
+.sc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.sc-rank {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--bg4);
+}
+.sc-cat {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  background: var(--bg4);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.sc-conf {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+.sc-conf.high { color: var(--green); }
+.sc-conf.mid { color: var(--yellow); }
+.sc-conf.low { color: var(--text3); }
+
+.sc-solucao {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.sc-bar-track {
+  height: 3px;
+  background: var(--bg4);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.sc-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 1s cubic-bezier(.16,1,.3,1);
+  width: 0;
+}
+.sc-bar-fill.high { background: var(--green); }
+.sc-bar-fill.mid { background: var(--yellow); }
+.sc-bar-fill.low { background: var(--text3); }
+
+.sc-meta {
+  display: flex;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 10px;
+}
+.empty-icon { font-size: 40px; opacity: .3; }
+.empty-title { font-family: var(--cond); font-size: 18px; font-weight: 700; color: var(--text3); }
+.empty-sub { font-size: 12px; color: var(--text3); max-width: 240px; line-height: 1.6; }
+
+/* ════════════════════════════════════════════
+   HISTÓRICO PAGE
+════════════════════════════════════════════ */
+.hist-filters {
+  display: flex;
+  gap: 10px;
+  padding: 16px 24px 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-select {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+.filter-select:focus { border-color: var(--blue); }
+.filter-search {
+  flex: 1;
+  min-width: 200px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  outline: none;
+}
+.filter-search::placeholder { color: var(--text3); }
+.filter-search:focus { border-color: var(--blue); }
+
+.hist-table-wrap {
+  padding: 16px 24px 24px;
+  overflow-x: auto;
+}
+.hist-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.hist-table th {
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.hist-table th:hover { color: var(--text2); }
+.hist-table td {
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text2);
+  vertical-align: top;
+}
+.hist-table tr:last-child td { border-bottom: none; }
+.hist-table tr:hover td { background: var(--bg3); color: var(--text); }
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+}
+.tag-blue { background: rgba(45,140,240,.15); color: var(--blue); }
+.tag-green { background: var(--green-dim); color: var(--green); }
+.tag-red { background: var(--red-dim); color: var(--red); }
+.tag-yellow { background: var(--yellow-dim); color: var(--yellow); }
+.tag-gray { background: var(--bg4); color: var(--text3); }
+
+.freq-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.freq-num { font-family: var(--mono); font-size: 11px; color: var(--text); }
+.freq-dots { display: flex; gap: 2px; }
+.freq-dot {
+  width: 5px; height: 5px;
+  border-radius: 1px;
+  background: var(--bg4);
+}
+.freq-dot.on { background: var(--blue); }
+
+/* ════════════════════════════════════════════
+   INSIGHTS PAGE
+════════════════════════════════════════════ */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 24px;
+}
+.insight-card {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.insight-card.span2 { grid-column: span 2; }
+.ic-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ic-icon { font-size: 16px; }
+.ic-title {
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+.ic-body { padding: 16px; }
+
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.rank-item:last-child { border-bottom: none; }
+.ri-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.ri-text { flex: 1; color: var(--text2); line-height: 1.4; }
+.ri-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+
+.pattern-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: var(--bg3);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border-left: 3px solid;
+  font-size: 12px;
+}
+.pattern-item.crit { border-color: var(--red); }
+.pattern-item.warn { border-color: var(--yellow); }
+.pattern-item.info { border-color: var(--blue); }
+.pi-icon { flex-shrink: 0; font-size: 15px; }
+.pi-text { color: var(--text2); line-height: 1.5; }
+.pi-text strong { color: var(--text); font-weight: 600; }
+
+/* ════════════════════════════════════════════
+   CONFIGURAÇÕES PAGE
+════════════════════════════════════════════ */
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 24px;
+}
+.config-section {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.cs-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text2);
+}
+.cs-body { padding: 16px; }
+.config-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.config-row:last-child { border-bottom: none; }
+.cr-label { color: var(--text2); }
+.cr-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+.toggle {
+  width: 36px; height: 20px;
+  background: var(--bg4);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--blue); }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  top: 3px; left: 3px;
+  transition: transform .2s;
+}
+.toggle.on::after { transform: translateX(16px); }
+
+.config-input {
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  outline: none;
+  width: 180px;
+}
+.config-input:focus { border-color: var(--blue); }
+
+.btn-save {
+  background: var(--blue);
+  border: none;
+  border-radius: 5px;
+  padding: 8px 20px;
+  font-family: var(--cond);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #fff;
+  cursor: pointer;
+  margin-top: 14px;
+  transition: all .15s;
+}
+.btn-save:hover { background: var(--blue2); }
+
+/* ════════════════════════════════════════════
+   MISC
+════════════════════════════════════════════ */
+.divider { height: 1px; background: var(--line); margin: 12px 0; }
+
+.toast-container {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 9999;
+}
+.toast {
+  background: var(--bg3);
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 320px;
+  animation: toastIn .3s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+@keyframes toastIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:none; } }
+.toast.fadeout { animation: toastOut .3s ease forwards; }
+@keyframes toastOut { to { opacity:0; transform:translateX(20px); } }
+
+/* Scan line effect background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,.04) 2px,
+    rgba(0,0,0,.04) 4px
+  );
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* Loading skeleton */
+.skel {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+  background-size: 400% 100%;
+  animation: skel .8s ease-in-out infinite;
+  border-radius: 4px;
+}
+@keyframes skel { 0%{background-position:100%} 100%{background-position:-100%} }
+
+/* Results section revealed */
+#results-section { display: none; }
+#results-section.visible { display: block; }
+
+/* Aprender form */
+.aprender-mini {
+  margin-top: 12px;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 14px;
+}
+.btn-secondary {
+  width: 100%;
+  padding: 9px;
+  background: transparent;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  font-family: var(--cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-secondary:hover { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">💀</div>
+      <span class="logo-text">InfraMind</span>
+      <span class="logo-ver">v1.0</span>
+    </div>
+
+    <div class="sidebar-section">Sistema</div>
+    <div class="nav-item active" data-page="dashboard">
+      <span class="nav-icon">⬛</span> Dashboard
+    </div>
+    <div class="nav-item" data-page="analise">
+      <span class="nav-icon">🔍</span> Análise
+    </div>
+
+    <div class="sidebar-section">Dados</div>
+    <div class="nav-item" data-page="historico">
+      <span class="nav-icon">📋</span> Histórico
+    </div>
+    <div class="nav-item" data-page="insights">
+      <span class="nav-icon">📈</span> Insights
+    </div>
+
+    <div class="sidebar-section">Sistema</div>
+    <div class="nav-item" data-page="config">
+      <span class="nav-icon">⚙️</span> Configurações
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sys-status">
+        <div class="status-row">
+          <div class="status-dot on" id="st-webhook"></div>
+          <span>n8n Webhook</span>
+        </div>
+        <div class="status-row">
+          <div class="status-dot on" id="st-supabase"></div>
+          <span>Supabase</span>
+        </div>
+        <div class="status-row">
+          <div class="status-dot warn" id="st-mode"></div>
+          <span id="st-mode-label">Modo Demo</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ MAIN ═══ -->
+  <div id="main">
+
+    <!-- HEADER -->
+    <div id="header">
+      <div class="page-title" id="page-title">Dashboard</div>
+
+      <div class="header-search">
+        <span class="s-icon">🔎</span>
+        <input type="text" placeholder="Buscar problemas, soluções..." id="global-search" autocomplete="off">
+      </div>
+
+      <div class="header-pills">
+        <div class="h-pill"><div class="dot g"></div><span id="pill-webhook">Webhook Online</span></div>
+        <div class="h-pill"><div class="dot g"></div><span>Supabase</span></div>
+      </div>
+      <div class="btn-icon" title="Atualizar" onclick="refreshData()">↺</div>
+      <div class="btn-icon" title="Notificações">🔔</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content">
+
+      <!-- ░░░ DASHBOARD ░░░ -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-pad">
+
+          <!-- Alertas ativos -->
+          <div id="active-alerts"></div>
+
+          <!-- Métricas -->
+          <div class="metrics-row">
+            <div class="metric-card blue">
+              <span class="mc-icon">📦</span>
+              <div class="mc-label">Total Problemas</div>
+              <div class="mc-value blue" id="m-total">—</div>
+              <div class="mc-sub">na base de dados</div>
+            </div>
+            <div class="metric-card cyan">
+              <span class="mc-icon">🕐</span>
+              <div class="mc-label">Hoje</div>
+              <div class="mc-value cyan" id="m-hoje">—</div>
+              <div class="mc-sub">novos registros</div>
+            </div>
+            <div class="metric-card yellow">
+              <span class="mc-icon">🔁</span>
+              <div class="mc-label">Mais Recorrente</div>
+              <div class="mc-value yellow" style="font-size:14px;margin-top:4px" id="m-recorrente">—</div>
+              <div class="mc-sub" id="m-recorrente-freq">0 ocorrências</div>
+            </div>
+            <div class="metric-card green">
+              <span class="mc-icon">✅</span>
+              <div class="mc-label">Taxa de Sucesso</div>
+              <div class="mc-value green" id="m-sucesso">—</div>
+              <div class="mc-sub">soluções confirmadas</div>
+            </div>
+            <div class="metric-card red">
+              <span class="mc-icon">🚨</span>
+              <div class="mc-label">Alertas Ativos</div>
+              <div class="mc-value red" id="m-alertas">0</div>
+              <div class="mc-sub">requerem atenção</div>
+            </div>
+          </div>
+
+          <!-- Grid inferior -->
+          <div class="dash-grid">
+            <!-- Atividade recente -->
+            <div class="dash-card">
+              <div class="dc-head">
+                <span class="dc-title">Atividade Recente</span>
+                <span class="dc-badge tag-blue">ao vivo</span>
+              </div>
+              <div class="dc-body" id="activity-list">
+                <div class="activity-item">
+                  <div class="ai-dot" style="background:var(--blue)"></div>
+                  <div class="ai-text"><strong>Carregando...</strong></div>
+                  <div class="ai-time">—</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Por categoria -->
+            <div class="dash-card">
+              <div class="dc-head">
+                <span class="dc-title">Por Categoria</span>
+              </div>
+              <div class="dc-body" id="cat-bars">
+                <div class="skel" style="height:14px;margin-bottom:12px"></div>
+                <div class="skel" style="height:14px;margin-bottom:12px"></div>
+                <div class="skel" style="height:14px"></div>
+              </div>
+            </div>
+
+            <!-- Últimas análises -->
+            <div class="dash-card full">
+              <div class="dc-head">
+                <span class="dc-title">Últimas Análises</span>
+                <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">sessão atual</span>
+              </div>
+              <div class="dc-body" id="last-analyses">
+                <div class="empty-state" style="padding:24px">
+                  <div class="empty-icon">🔍</div>
+                  <div class="empty-title">Nenhuma análise ainda</div>
+                  <div class="empty-sub">Vá em Análise para submeter um problema</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ░░░ ANÁLISE ░░░ -->
+      <div class="page" id="page-analise">
+        <div class="analise-layout">
+
+          <!-- Formulário -->
+          <div class="analise-card">
+            <div class="dc-head">
+              <span class="dc-title">🔍 Submeter Problema</span>
+            </div>
+            <div class="dc-body">
+              <div class="form-group">
+                <label class="form-label">Problema *</label>
+                <input class="form-input" type="text" id="inp-problema"
+                  placeholder="Ex: impressora não imprime, servidor offline..." autocomplete="off">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Descrição</label>
+                <textarea class="form-input" id="inp-descricao" rows="4"
+                  placeholder="Descreva o problema com mais detalhes: quando acontece, frequência, ambiente afetado..."></textarea>
+              </div>
+              <button class="btn-primary" id="btn-analisar" onclick="analisarProblema()">
+                <span class="btn-text">⚡ Analisar Problema</span>
+                <span class="btn-spinner"><span class="spinner"></span> Analisando...</span>
+              </button>
+
+              <!-- Aprender resultado -->
+              <div id="aprender-box" style="display:none">
+                <div class="divider"></div>
+                <div class="aprender-mini">
+                  <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px">Registrar Solução Aplicada</div>
+                  <div class="form-group">
+                    <label class="form-label">Solução que funcionou</label>
+                    <textarea class="form-input" id="inp-solucao-aprender" rows="2"
+                      placeholder="Descreva a solução que resolveu o problema..."></textarea>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-bottom:10px">
+                    <div class="form-group" style="flex:1;margin-bottom:0">
+                      <label class="form-label">Categoria</label>
+                      <select class="form-input" id="inp-cat-aprender" style="cursor:pointer">
+                        <option value="Geral">Geral</option>
+                        <option value="Hardware">Hardware</option>
+                        <option value="Software">Software</option>
+                        <option value="Rede">Rede</option>
+                        <option value="Sistema">Sistema</option>
+                        <option value="Infraestrutura">Infraestrutura</option>
+                        <option value="Performance">Performance</option>
+                        <option value="Segurança">Segurança</option>
+                      </select>
+                    </div>
+                    <div style="display:flex;align-items:flex-end;margin-bottom:0">
+                      <div style="display:flex;flex-direction:column;gap:4px">
+                        <span class="form-label">Resolveu?</span>
+                        <div style="display:flex;gap:8px">
+                          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;color:var(--text2)">
+                            <input type="radio" name="sucesso" value="true" checked style="accent-color:var(--green)"> Sim
+                          </label>
+                          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;color:var(--text2)">
+                            <input type="radio" name="sucesso" value="false" style="accent-color:var(--red)"> Não
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="btn-secondary" onclick="registrarAprendizado()">
+                    + Registrar e Treinar Sistema
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resultados -->
+          <div class="analise-card">
+            <div class="dc-head">
+              <span class="dc-title">💡 Sugestões</span>
+              <span id="resultado-meta" style="font-family:var(--mono);font-size:10px;color:var(--text3)"></span>
+            </div>
+            <div class="dc-body" id="sugestoes-container">
+              <div class="empty-state">
+                <div class="empty-icon">🧠</div>
+                <div class="empty-title">Aguardando análise</div>
+                <div class="empty-sub">Preencha o formulário ao lado e clique em Analisar</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alertas resultado -->
+          <div class="analise-card full" id="alertas-resultado" style="display:none">
+            <div class="dc-head">
+              <span class="dc-title">🚨 Alertas Detectados</span>
+            </div>
+            <div class="dc-body" id="alertas-container"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ░░░ HISTÓRICO ░░░ -->
+      <div class="page" id="page-historico">
+        <div class="hist-filters">
+          <input class="filter-search" type="text" id="hist-search" placeholder="🔎  Buscar problema ou solução..." oninput="filtrarHistorico()">
+          <select class="filter-select" id="hist-cat" onchange="filtrarHistorico()">
+            <option value="">Categoria: Todas</option>
+            <option value="Hardware">Hardware</option>
+            <option value="Software">Software</option>
+            <option value="Rede">Rede</option>
+            <option value="Sistema">Sistema</option>
+            <option value="Infraestrutura">Infraestrutura</option>
+            <option value="Performance">Performance</option>
+            <option value="Segurança">Segurança</option>
+            <option value="Geral">Geral</option>
+          </select>
+          <select class="filter-select" id="hist-sucesso" onchange="filtrarHistorico()">
+            <option value="">Sucesso: Todos</option>
+            <option value="true">✅ Confirmados</option>
+            <option value="false">❌ Não confirmados</option>
+          </select>
+          <select class="filter-select" id="hist-freq" onchange="filtrarHistorico()">
+            <option value="">Frequência: Todas</option>
+            <option value="5">Alta (5+)</option>
+            <option value="3">Média (3+)</option>
+            <option value="1">Baixa (1+)</option>
+          </select>
+          <span id="hist-count" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:auto"></span>
+        </div>
+        <div class="hist-table-wrap">
+          <table class="hist-table">
+            <thead>
+              <tr>
+                <th onclick="sortHistorico('problema')">Problema ⇅</th>
+                <th onclick="sortHistorico('categoria')">Categoria ⇅</th>
+                <th>Solução</th>
+                <th onclick="sortHistorico('frequencia')">Freq ⇅</th>
+                <th onclick="sortHistorico('sucesso')">Sucesso ⇅</th>
+                <th onclick="sortHistorico('data')">Data ⇅</th>
+              </tr>
+            </thead>
+            <tbody id="hist-tbody">
+              <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ░░░ INSIGHTS ░░░ -->
+      <div class="page" id="page-insights">
+        <div class="insights-grid">
+
+          <div class="insight-card">
+            <div class="ic-head"><span class="ic-icon">🏆</span><span class="ic-title">Top Problemas</span></div>
+            <div class="ic-body" id="ins-top-problemas">
+              <div class="skel" style="height:12px;margin-bottom:10px"></div>
+              <div class="skel" style="height:12px;margin-bottom:10px"></div>
+              <div class="skel" style="height:12px"></div>
+            </div>
+          </div>
+
+          <div class="insight-card">
+            <div class="ic-head"><span class="ic-icon">✨</span><span class="ic-title">Soluções Eficazes</span></div>
+            <div class="ic-body" id="ins-solucoes">
+              <div class="skel" style="height:12px;margin-bottom:10px"></div>
+              <div class="skel" style="height:12px;margin-bottom:10px"></div>
+              <div class="skel" style="height:12px"></div>
+            </div>
+          </div>
+
+          <div class="insight-card span2">
+            <div class="ic-head"><span class="ic-icon">🔮</span><span class="ic-title">Padrões Detectados</span></div>
+            <div class="ic-body" id="ins-padroes"></div>
+          </div>
+
+          <div class="insight-card">
+            <div class="ic-head"><span class="ic-icon">📊</span><span class="ic-title">Saúde do Sistema</span></div>
+            <div class="ic-body" id="ins-saude"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ░░░ CONFIG ░░░ -->
+      <div class="page" id="page-config">
+        <div class="config-grid">
+
+          <div class="config-section">
+            <div class="cs-head">🔗 Integração n8n</div>
+            <div class="cs-body">
+              <div class="form-group">
+                <label class="form-label">URL do Webhook Principal</label>
+                <input class="config-input" type="text" id="cfg-webhook" style="width:100%"
+                  placeholder="https://seu-n8n.app.n8n.cloud/webhook/inframind">
+              </div>
+              <div class="form-group">
+                <label class="form-label">URL Webhook Aprender</label>
+                <input class="config-input" type="text" id="cfg-aprender" style="width:100%"
+                  placeholder="https://seu-n8n.app.n8n.cloud/webhook/aprender">
+              </div>
+              <div class="form-group">
+                <label class="form-label">URL Webhook Frequência</label>
+                <input class="config-input" type="text" id="cfg-freq" style="width:100%"
+                  placeholder="https://seu-n8n.app.n8n.cloud/webhook/atualizar-frequencia">
+              </div>
+              <div class="config-row">
+                <div><div class="cr-label">Modo Demo (Mock Data)</div><div class="cr-desc">Usa dados simulados quando API falha</div></div>
+                <div class="toggle on" id="toggle-demo" onclick="toggleDemo(this)"></div>
+              </div>
+              <button class="btn-save" onclick="salvarConfig()">Salvar Configuração</button>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <div class="cs-head">⚙️ Parâmetros do Motor</div>
+            <div class="cs-body">
+              <div class="config-row">
+                <div><div class="cr-label">Limiar de Recorrência</div><div class="cr-desc">Ocorrências para alerta</div></div>
+                <input class="config-input" type="number" id="cfg-rec" value="3" style="width:70px">
+              </div>
+              <div class="config-row">
+                <div><div class="cr-label">Limiar de Surto (24h)</div><div class="cr-desc">Ocorrências para alerta crítico</div></div>
+                <input class="config-input" type="number" id="cfg-surto" value="5" style="width:70px">
+              </div>
+              <div class="config-row">
+                <div><div class="cr-label">Sugestões Máximas</div><div class="cr-desc">Resultados retornados</div></div>
+                <input class="config-input" type="number" id="cfg-top" value="3" style="width:70px">
+              </div>
+              <div class="config-row">
+                <div><div class="cr-label">Alertas Sonoros</div><div class="cr-desc">Notificação em alertas críticos</div></div>
+                <div class="toggle" id="toggle-sound" onclick="toggleDemo(this)"></div>
+              </div>
+              <div class="config-row">
+                <div><div class="cr-label">Auto-refresh Dashboard</div><div class="cr-desc">Atualizar a cada 30s</div></div>
+                <div class="toggle on" id="toggle-refresh" onclick="toggleDemo(this)"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <div class="cs-head">🗄️ Banco de Dados</div>
+            <div class="cs-body">
+              <div class="form-group">
+                <label class="form-label">Supabase Project URL</label>
+                <input class="config-input" type="text" id="cfg-sb-url" style="width:100%"
+                  placeholder="https://xxx.supabase.co">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Supabase Anon Key</label>
+                <input class="config-input" type="password" id="cfg-sb-key" style="width:100%"
+                  placeholder="eyJhbGciOiJIUzI1NiIs...">
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn-save" onclick="testarConexao()" style="background:var(--bg4);color:var(--text2)">Testar Conexão</button>
+                <button class="btn-save" onclick="salvarConfig()">Salvar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <div class="cs-head">ℹ️ Sobre o Sistema</div>
+            <div class="cs-body">
+              <div class="rank-item">
+                <div class="ri-num">Ver</div>
+                <div class="ri-text">InfraMind</div>
+                <div class="ri-val">v1.0.0</div>
+              </div>
+              <div class="rank-item">
+                <div class="ri-num">Eng</div>
+                <div class="ri-text">Motor de Similaridade</div>
+                <div class="ri-val">Jaccard</div>
+              </div>
+              <div class="rank-item">
+                <div class="ri-num">DB</div>
+                <div class="ri-text">Banco de Dados</div>
+                <div class="ri-val">Supabase</div>
+              </div>
+              <div class="rank-item">
+                <div class="ri-num">Aut</div>
+                <div class="ri-text">Automação</div>
+                <div class="ri-val">n8n</div>
+              </div>
+              <div style="margin-top:14px;padding:10px;background:var(--bg3);border-radius:6px;font-family:var(--mono);font-size:10px;color:var(--text3);line-height:1.8">
+                score = similaridade + freq + (sucesso ? 2 : 0)<br>
+                max_score = 17 | confiança = score/17 × 100
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- Toast container -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   CONFIGURAÇÃO GLOBAL
+═══════════════════════════════════════════════════ */
+const CFG = {
+  webhookUrl: localStorage.getItem('cfg_webhook') || '',
+  aprenderUrl: localStorage.getItem('cfg_aprender') || '',
+  freqUrl: localStorage.getItem('cfg_freq') || '',
+  demoMode: localStorage.getItem('cfg_demo') !== 'false',
+  limiRec: parseInt(localStorage.getItem('cfg_rec') || '3'),
+  limiSurto: parseInt(localStorage.getItem('cfg_surto') || '5'),
+};
+
+/* ═══════════════════════════════════════════════════
+   DADOS MOCK
+═══════════════════════════════════════════════════ */
+const MOCK_BANCO = [
+  { id:'1', problema:'impressora não imprime documentos', categoria:'Hardware', solucao:'Reiniciar o spooler de impressão no services.msc do Windows', sucesso:true, frequencia:8, data:'2025-01-18T10:30:00Z', origem:'suporte' },
+  { id:'2', problema:'computador lento demora muito para abrir programas', categoria:'Performance', solucao:'Verificar processos em segundo plano no Task Manager e limpar arquivos temporários em %temp%', sucesso:true, frequencia:15, data:'2025-01-17T14:20:00Z', origem:'suporte' },
+  { id:'3', problema:'wifi sem conexão internet não conecta rede', categoria:'Rede', solucao:'Esquecer a rede WiFi, reconectar e verificar configurações de DNS (8.8.8.8)', sucesso:true, frequencia:12, data:'2025-01-19T09:15:00Z', origem:'usuario' },
+  { id:'4', problema:'tela azul bsod erro sistema reinicia automaticamente', categoria:'Sistema', solucao:'Verificar drivers atualizados e executar sfc /scannow no Prompt de Comando como Admin', sucesso:true, frequencia:4, data:'2025-01-16T16:45:00Z', origem:'suporte' },
+  { id:'5', problema:'email não abre outlook travado não responde', categoria:'Software', solucao:'Reparar perfil do Outlook: Painel de Controle → Programas → Microsoft Office → Reparar', sucesso:true, frequencia:6, data:'2025-01-20T11:00:00Z', origem:'usuario' },
+  { id:'6', problema:'servidor fora do ar site não carrega down', categoria:'Infraestrutura', solucao:'Verificar status do serviço web, reiniciar nginx/apache, verificar logs em /var/log/', sucesso:true, frequencia:3, data:'2025-01-15T08:30:00Z', origem:'suporte' },
+  { id:'7', problema:'monitor sem sinal tela preta não liga display', categoria:'Hardware', solucao:'Verificar cabo HDMI/DisplayPort, testar outra porta do monitor, reinstalar drivers de vídeo', sucesso:true, frequencia:5, data:'2025-01-14T13:20:00Z', origem:'usuario' },
+  { id:'8', problema:'acesso negado sem permissão pasta compartilhada rede', categoria:'Segurança', solucao:'Verificar permissões NTFS e compartilhamento de rede no Active Directory ou grupo local', sucesso:false, frequencia:9, data:'2025-01-21T10:00:00Z', origem:'suporte' },
+  { id:'9', problema:'pendrive não reconhecido usb não aparece dispositivo', categoria:'Hardware', solucao:'Tentar outra porta USB, verificar no Gerenciador de Dispositivos, formatar se necessário', sucesso:true, frequencia:7, data:'2025-01-22T15:30:00Z', origem:'usuario' },
+  { id:'10', problema:'internet lenta velocidade baixa download upload', categoria:'Rede', solucao:'Testar velocidade no speedtest.net, reiniciar roteador, verificar canal WiFi e interferências', sucesso:true, frequencia:11, data:'2025-01-21T09:00:00Z', origem:'usuario' },
+];
+
+const SESSION_ANALYSES = [];
+let histSortField = 'data';
+let histSortAsc = false;
+
+/* ═══════════════════════════════════════════════════
+   NAVEGAÇÃO
+═══════════════════════════════════════════════════ */
+const PAGE_TITLES = {
+  dashboard: 'Dashboard',
+  analise: 'Análise de Problemas',
+  historico: 'Histórico',
+  insights: 'Insights',
+  config: 'Configurações'
+};
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const page = item.dataset.page;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('page-title').textContent = PAGE_TITLES[page];
+    if (page === 'historico') renderHistorico();
+    if (page === 'insights') renderInsights();
+    if (page === 'config') loadConfigUI();
+  });
+});
+
+/* ═══════════════════════════════════════════════════
+   UTILITÁRIOS
+═══════════════════════════════════════════════════ */
+function toast(msg, type = 'info', duration = 3500) {
+  const icons = { info: 'ℹ️', success: '✅', error: '❌', warn: '⚠️' };
+  const container = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('fadeout');
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'agora';
+  if (m < 60) return `${m}min atrás`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h atrás`;
+  return `${Math.floor(h/24)}d atrás`;
+}
+
+function catColor(cat) {
+  const map = {
+    Hardware: '#2d8cf0', Software: '#00d4ff', Rede: '#00e676',
+    Sistema: '#ffb800', Infraestrutura: '#ff3b3b', Performance: '#a855f7',
+    Segurança: '#f97316', Geral: '#64748b'
+  };
+  return map[cat] || '#64748b';
+}
+
+/* ═══════════════════════════════════════════════════
+   MOTOR DE SIMILARIDADE (JS Local)
+═══════════════════════════════════════════════════ */
+const STOPWORDS = new Set(['com','para','uma','que','nao','não','por','mais',
+  'como','mas','seu','sua','dos','das','nos','nas','foi','tem','ter','ser',
+  'isso','este','esta','esse','essa','eles','elas','quando','onde','qual',
+  'quais','mesmo','também','este','aquele','sobre','entre','até','desde']);
+
+function tokenizar(txt) {
+  if (!txt) return [];
+  return txt.toLowerCase()
+    .replace(/[^a-záàâãéêíóôõúüçñ0-9\s]/gi, '')
+    .split(/\s+/)
+    .filter(t => t.length > 2 && !STOPWORDS.has(t));
+}
+
+function calcularSimilaridade(entrada, banco) {
+  const tA = new Set(tokenizar(entrada));
+  return banco.map(reg => {
+    const tB = new Set(tokenizar(reg.problema || ''));
+    const comuns = [...tA].filter(x => tB.has(x));
+    const uniao = new Set([...tA, ...tB]).size;
+    const jaccard = uniao > 0 ? comuns.length / uniao : 0;
+    const similaridade = parseFloat((jaccard * 10).toFixed(2));
+    const freq = Math.min(reg.frequencia || 0, 5);
+    const bonus = reg.sucesso === true ? 2 : 0;
+    const score = parseFloat((similaridade + freq + bonus).toFixed(2));
+    const confianca = Math.min(Math.round((score / 17) * 100), 99);
+    return { ...reg, similaridade, score, confianca };
+  }).filter(r => r.similaridade > 0);
+}
+
+/* ═══════════════════════════════════════════════════
+   ANÁLISE PRINCIPAL
+═══════════════════════════════════════════════════ */
+async function analisarProblema() {
+  const problema = document.getElementById('inp-problema').value.trim();
+  const descricao = document.getElementById('inp-descricao').value.trim();
+
+  if (!problema) {
+    toast('Digite o problema antes de analisar.', 'warn');
+    document.getElementById('inp-problema').focus();
+    return;
+  }
+
+  const btn = document.getElementById('btn-analisar');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  let resultado = null;
+
+  // Tentar API real
+  if (CFG.webhookUrl && !CFG.demoMode) {
+    try {
+      const res = await fetch(CFG.webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problema, descricao })
+      });
+      resultado = await res.json();
+    } catch (e) {
+      toast('API indisponível — usando dados locais.', 'warn');
+    }
+  }
+
+  // Fallback local
+  if (!resultado) {
+    await new Promise(r => setTimeout(r, 900)); // simula latência
+    resultado = computarLocal(problema, descricao);
+  }
+
+  btn.classList.remove('loading');
+  btn.disabled = false;
+
+  renderResultados(resultado, problema);
+
+  // Registrar na sessão
+  SESSION_ANALYSES.unshift({
+    problema, descricao,
+    sugestoes: resultado.sugestoes,
+    urgencia: resultado.urgencia,
+    timestamp: new Date().toISOString()
+  });
+  atualizarUltimasAnalises();
+  document.getElementById('aprender-box').style.display = 'block';
+}
+
+function computarLocal(problema, descricao) {
+  const entrada = problema + ' ' + descricao;
+  const candidatos = calcularSimilaridade(entrada, MOCK_BANCO);
+
+  // Deduplicar e ranquear
+  const mapa = {};
+  candidatos.forEach(r => {
+    const k = r.solucao.toLowerCase().slice(0, 40);
+    if (!mapa[k] || r.score > mapa[k].score) mapa[k] = r;
+  });
+  const top3 = Object.values(mapa)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((item, i) => ({
+      posicao: i + 1,
+      solucao: item.solucao,
+      categoria: item.categoria,
+      score: item.score,
+      confianca: item.confianca,
+      nivel_confianca: item.confianca >= 70 ? 'ALTO' : item.confianca >= 40 ? 'MÉDIO' : 'BAIXO',
+      sucesso_historico: item.sucesso,
+      frequencia_historica: item.frequencia
+    }));
+
+  if (top3.length === 0) {
+    top3.push({
+      posicao: 1, solucao: 'Nenhuma solução similar encontrada no histórico. Registre a solução após resolver!',
+      categoria: 'Desconhecido', score: 0, confianca: 0, nivel_confianca: 'BAIXO',
+      sucesso_historico: false, frequencia_historica: 0
+    });
+  }
+
+  // Recorrência
+  const similares = candidatos.filter(r => r.similaridade >= 5);
+  const totalOcorr = similares.reduce((a, r) => a + (r.frequencia || 1), 0);
+  const recorrente = totalOcorr > CFG.limiRec;
+
+  // Surto
+  const agora = new Date();
+  const recentes = candidatos.filter(r => {
+    const d = r.data ? new Date(r.data) : null;
+    return d && (agora - d) < 86400000 && r.similaridade >= 4;
+  });
+  const totalRecentes = recentes.reduce((a, r) => a + (r.frequencia || 1), 0);
+  const surto = totalRecentes >= CFG.limiSurto;
+
+  const alertas = [];
+  if (recorrente) alertas.push({ tipo: 'RECORRÊNCIA', nivel: 'WARNING', mensagem: `⚠️ Problema recorrente — ${totalOcorr} ocorrências no histórico`, recomendacao: 'Considere uma solução definitiva.' });
+  if (surto) alertas.push({ tipo: 'SURTO', nivel: 'CRITICAL', mensagem: `🚨 Possível falha geral — ${totalRecentes} ocorrências similares nas últimas 24h`, recomendacao: 'Verifique a infraestrutura imediatamente.' });
+
+  return {
+    sugestoes: top3,
+    recorrente,
+    surto_detectado: surto,
+    alertas,
+    alerta: surto ? alertas[alertas.length-1]?.mensagem : recorrente ? alertas[0]?.mensagem : null,
+    urgencia: surto ? 'CRÍTICO' : recorrente ? 'ALTO' : 'NORMAL',
+    stats: { total_no_banco: MOCK_BANCO.length, candidatos_analisados: candidatos.length }
+  };
+}
+
+/* ═══════════════════════════════════════════════════
+   RENDERIZAR RESULTADOS
+═══════════════════════════════════════════════════ */
+function renderResultados(res, problema) {
+  const container = document.getElementById('sugestoes-container');
+  const meta = document.getElementById('resultado-meta');
+  const alertDiv = document.getElementById('alertas-resultado');
+  const alertContainer = document.getElementById('alertas-container');
+
+  meta.textContent = `${res.stats?.candidatos_analisados || 0} candidatos analisados • ${res.stats?.total_no_banco || 0} no banco`;
+
+  // Sugestões
+  if (!res.sugestoes || res.sugestoes.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🤷</div><div class="empty-title">Sem resultados</div><div class="empty-sub">Nenhuma solução similar encontrada.</div></div>';
+    return;
+  }
+
+  container.innerHTML = res.sugestoes.map((s, i) => {
+    const cl = s.nivel_confianca === 'ALTO' ? 'high' : s.nivel_confianca === 'MÉDIO' ? 'mid' : 'low';
+    return `
+    <div class="sugestao-card rank-${i+1}" onclick="copiarSolucao('${s.solucao.replace(/'/g,"\\'")}')">
+      <div class="sc-header">
+        <span class="sc-rank">#${s.posicao}</span>
+        <span class="sc-cat">${s.categoria}</span>
+        <span class="sc-conf ${cl}">${s.confianca}% confiança</span>
+      </div>
+      <div class="sc-solucao">${s.solucao}</div>
+      <div class="sc-bar-track">
+        <div class="sc-bar-fill ${cl}" data-w="${s.confianca}" style="width:0%"></div>
+      </div>
+      <div class="sc-meta">
+        <span>Score: ${s.score}</span>
+        <span>|</span>
+        <span>Freq: ${s.frequencia_historica}×</span>
+        <span>|</span>
+        <span>${s.sucesso_historico ? '✅ Confirmada' : '⬜ Não confirmada'}</span>
+        <span style="margin-left:auto;opacity:.5">clique p/ copiar</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Animar barras
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.sc-bar-fill').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  });
+
+  // Alertas
+  if (res.alertas && res.alertas.length > 0) {
+    alertDiv.style.display = 'block';
+    alertContainer.innerHTML = res.alertas.map(a => `
+      <div class="alert-banner ${a.nivel === 'CRITICAL' ? 'red' : 'yellow'}">
+        <div class="ab-icon">${a.nivel === 'CRITICAL' ? '🚨' : '⚠️'}</div>
+        <div>
+          <div class="ab-title">${a.mensagem}</div>
+          <div class="ab-msg">${a.recomendacao || ''}</div>
+        </div>
+      </div>`).join('');
+
+    // Atualizar badge no sidebar
+    const badge = document.getElementById('alertas-badge');
+    if (badge) badge.textContent = res.alertas.length;
+    document.getElementById('m-alertas').textContent = res.alertas.length;
+  } else {
+    alertDiv.style.display = 'none';
+  }
+
+  toast(`${res.sugestoes.length} sugestão(ões) encontrada(s) • Urgência: ${res.urgencia}`, res.urgencia === 'CRÍTICO' ? 'error' : res.urgencia === 'ALTO' ? 'warn' : 'success');
+}
+
+function copiarSolucao(texto) {
+  navigator.clipboard?.writeText(texto).then(() => toast('Solução copiada!', 'success', 2000));
+}
+
+/* ═══════════════════════════════════════════════════
+   APRENDIZADO
+═══════════════════════════════════════════════════ */
+async function registrarAprendizado() {
+  const problema = document.getElementById('inp-problema').value.trim();
+  const solucao = document.getElementById('inp-solucao-aprender').value.trim();
+  const categoria = document.getElementById('inp-cat-aprender').value;
+  const sucesso = document.querySelector('input[name="sucesso"]:checked')?.value === 'true';
+
+  if (!solucao) { toast('Digite a solução aplicada.', 'warn'); return; }
+
+  // Tentar API
+  let ok = false;
+  if (CFG.aprenderUrl && !CFG.demoMode) {
+    try {
+      const res = await fetch(CFG.aprenderUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problema, solucao, sucesso, categoria })
+      });
+      ok = res.ok;
+    } catch (e) {}
+  }
+
+  if (!ok) {
+    // Mock: adicionar ao banco local
+    MOCK_BANCO.push({
+      id: String(Date.now()), problema, categoria, solucao, sucesso,
+      frequencia: 1, data: new Date().toISOString(), origem: 'usuario'
+    });
+  }
+
+  toast('Sistema aprendeu! Dados registrados com sucesso.', 'success');
+  document.getElementById('inp-solucao-aprender').value = '';
+  document.getElementById('aprender-box').style.display = 'none';
+  renderDashboard();
+}
+
+/* ═══════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════ */
+function renderDashboard() {
+  const total = MOCK_BANCO.length;
+  const hoje = MOCK_BANCO.filter(r => {
+    const d = new Date(r.data);
+    const now = new Date();
+    return d.toDateString() === now.toDateString();
+  }).length;
+
+  const maisFreq = [...MOCK_BANCO].sort((a,b) => b.frequencia - a.frequencia)[0];
+  const sucessos = MOCK_BANCO.filter(r => r.sucesso).length;
+  const taxaSucesso = Math.round((sucessos / total) * 100) + '%';
+
+  document.getElementById('m-total').textContent = total;
+  document.getElementById('m-hoje').textContent = hoje;
+  document.getElementById('m-recorrente').textContent = maisFreq?.problema?.slice(0,28) + '...' || '—';
+  document.getElementById('m-recorrente-freq').textContent = `${maisFreq?.frequencia || 0} ocorrências`;
+  document.getElementById('m-sucesso').textContent = taxaSucesso;
+
+  renderActivity();
+  renderCatBars();
+  renderAlertsPanel();
+}
+
+function renderActivity() {
+  const recentes = [...MOCK_BANCO]
+    .sort((a,b) => new Date(b.data) - new Date(a.data))
+    .slice(0, 5);
+
+  const cols = { Hardware:'var(--blue)', Software:'var(--cyan)', Rede:'var(--green)', Sistema:'var(--yellow)', Infraestrutura:'var(--red)', Performance:'var(--text2)', Segurança:'var(--yellow)', Geral:'var(--text3)' };
+
+  document.getElementById('activity-list').innerHTML = recentes.map(r => `
+    <div class="activity-item">
+      <div class="ai-dot" style="background:${cols[r.categoria] || 'var(--text3)'}"></div>
+      <div class="ai-text"><strong>${r.problema.slice(0,40)}${r.problema.length>40?'...':''}</strong></div>
+      <div class="ai-time">${timeAgo(r.data)}</div>
+    </div>`).join('');
+}
+
+function renderCatBars() {
+  const counts = {};
+  MOCK_BANCO.forEach(r => { counts[r.categoria] = (counts[r.categoria] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const max = sorted[0]?.[1] || 1;
+
+  document.getElementById('cat-bars').innerHTML = sorted.map(([cat, n]) => `
+    <div class="cat-bar-item">
+      <div class="cb-info">
+        <span class="cb-name">${cat}</span>
+        <span class="cb-count">${n}</span>
+      </div>
+      <div class="cb-track">
+        <div class="cb-fill" data-w="${Math.round((n/max)*100)}" style="background:${catColor(cat)};width:0%"></div>
+      </div>
+    </div>`).join('');
+
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.cb-fill').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  });
+}
+
+function renderAlertsPanel() {
+  const alertsDiv = document.getElementById('active-alerts');
+  const highFreq = MOCK_BANCO.filter(r => r.frequencia > CFG.limiRec);
+  alertsDiv.innerHTML = '';
+
+  if (highFreq.length > 0) {
+    alertsDiv.innerHTML += `
+      <div class="alert-banner yellow" style="margin-bottom:12px">
+        <div class="ab-icon">⚠️</div>
+        <div>
+          <div class="ab-title">${highFreq.length} problema(s) recorrente(s) detectado(s)</div>
+          <div class="ab-msg">${highFreq.map(r => r.problema.slice(0,40)).join(' • ')}</div>
+        </div>
+      </div>`;
+    document.getElementById('m-alertas').textContent = highFreq.length;
+  }
+}
+
+function atualizarUltimasAnalises() {
+  const container = document.getElementById('last-analyses');
+  if (SESSION_ANALYSES.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="padding:24px"><div class="empty-icon">🔍</div><div class="empty-title">Nenhuma análise ainda</div><div class="empty-sub">Vá em Análise para submeter um problema</div></div>';
+    return;
+  }
+  container.innerHTML = SESSION_ANALYSES.slice(0,5).map(a => `
+    <div class="activity-item" style="cursor:pointer" onclick="irParaAnalise()">
+      <div class="ai-dot" style="background:${a.urgencia==='CRÍTICO'?'var(--red)':a.urgencia==='ALTO'?'var(--yellow)':'var(--green)'}"></div>
+      <div class="ai-text">
+        <strong>${a.problema.slice(0,50)}${a.problema.length>50?'...':''}</strong>
+        <span style="display:block;font-size:11px;color:var(--text3);margin-top:2px">${a.sugestoes?.length||0} sugestão(ões) • Urgência: <span style="color:${a.urgencia==='CRÍTICO'?'var(--red)':a.urgencia==='ALTO'?'var(--yellow)':'var(--green)'}">${a.urgencia}</span></span>
+      </div>
+      <div class="ai-time">${timeAgo(a.timestamp)}</div>
+    </div>`).join('');
+}
+
+function irParaAnalise() {
+  document.querySelector('[data-page="analise"]').click();
+}
+
+/* ═══════════════════════════════════════════════════
+   HISTÓRICO
+═══════════════════════════════════════════════════ */
+function renderHistorico() {
+  filtrarHistorico();
+}
+
+function filtrarHistorico() {
+  const q = document.getElementById('hist-search').value.toLowerCase();
+  const cat = document.getElementById('hist-cat').value;
+  const suc = document.getElementById('hist-sucesso').value;
+  const freqMin = parseInt(document.getElementById('hist-freq').value || '0');
+
+  let dados = [...MOCK_BANCO];
+
+  if (q) dados = dados.filter(r =>
+    r.problema.toLowerCase().includes(q) ||
+    r.solucao.toLowerCase().includes(q) ||
+    r.categoria.toLowerCase().includes(q)
+  );
+  if (cat) dados = dados.filter(r => r.categoria === cat);
+  if (suc !== '') dados = dados.filter(r => String(r.sucesso) === suc);
+  if (freqMin > 0) dados = dados.filter(r => (r.frequencia||0) >= freqMin);
+
+  // Sort
+  dados.sort((a,b) => {
+    const va = a[histSortField], vb = b[histSortField];
+    if (typeof va === 'string') return histSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    return histSortAsc ? va - vb : vb - va;
+  });
+
+  document.getElementById('hist-count').textContent = `${dados.length} registro(s)`;
+
+  const tbody = document.getElementById('hist-tbody');
+  if (dados.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">Nenhum registro encontrado</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = dados.map(r => `
+    <tr>
+      <td style="max-width:220px">
+        <div style="color:var(--text);font-weight:500">${r.problema.slice(0,60)}${r.problema.length>60?'...':''}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">${r.origem || 'sistema'}</div>
+      </td>
+      <td><span class="tag" style="background:${catColor(r.categoria)}22;color:${catColor(r.categoria)}">${r.categoria}</span></td>
+      <td style="max-width:260px;color:var(--text2);font-size:12px">${r.solucao.slice(0,70)}${r.solucao.length>70?'...':''}</td>
+      <td>
+        <div class="freq-bar">
+          <span class="freq-num">${r.frequencia}</span>
+          <div class="freq-dots">
+            ${Array.from({length:5}).map((_,i)=>`<div class="freq-dot ${i<Math.min(r.frequencia,5)?'on':''}"></div>`).join('')}
+          </div>
+        </div>
+      </td>
+      <td>${r.sucesso ? '<span class="tag tag-green">✓ Sim</span>' : '<span class="tag tag-red">✗ Não</span>'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap">
+        ${new Date(r.data).toLocaleDateString('pt-BR')}
+      </td>
+    </tr>`).join('');
+}
+
+function sortHistorico(field) {
+  if (histSortField === field) histSortAsc = !histSortAsc;
+  else { histSortField = field; histSortAsc = false; }
+  filtrarHistorico();
+}
+
+/* ═══════════════════════════════════════════════════
+   INSIGHTS
+═══════════════════════════════════════════════════ */
+function renderInsights() {
+  // Top problemas
+  const top5 = [...MOCK_BANCO].sort((a,b) => b.frequencia - a.frequencia).slice(0,5);
+  document.getElementById('ins-top-problemas').innerHTML = top5.map((r,i) => `
+    <div class="rank-item">
+      <div class="ri-num">#${i+1}</div>
+      <div class="ri-text">${r.problema.slice(0,52)}${r.problema.length>52?'...':''}</div>
+      <div class="ri-val">${r.frequencia}×</div>
+    </div>`).join('');
+
+  // Soluções eficazes
+  const eficazes = [...MOCK_BANCO].filter(r => r.sucesso).sort((a,b) => b.frequencia - a.frequencia).slice(0,5);
+  document.getElementById('ins-solucoes').innerHTML = eficazes.map((r,i) => `
+    <div class="rank-item">
+      <div class="ri-num">#${i+1}</div>
+      <div class="ri-text">${r.solucao.slice(0,52)}${r.solucao.length>52?'...':''}</div>
+      <div class="ri-val" style="color:var(--green)">✓</div>
+    </div>`).join('');
+
+  // Padrões
+  const total = MOCK_BANCO.length;
+  const recorrentes = MOCK_BANCO.filter(r => r.frequencia > CFG.limiRec);
+  const falhas = MOCK_BANCO.filter(r => !r.sucesso);
+  const catCounts = {};
+  MOCK_BANCO.forEach(r => catCounts[r.categoria] = (catCounts[r.categoria] || 0) + r.frequencia);
+  const topCat = Object.entries(catCounts).sort((a,b) => b[1]-a[1])[0];
+
+  document.getElementById('ins-padroes').innerHTML = `
+    <div class="pattern-item ${recorrentes.length > 2 ? 'warn' : 'info'}">
+      <span class="pi-icon">🔁</span>
+      <div class="pi-text"><strong>${recorrentes.length} problema(s) recorrente(s)</strong> — representam ${Math.round((recorrentes.length/total)*100)}% da base com mais de ${CFG.limiRec} ocorrências cada.</div>
+    </div>
+    <div class="pattern-item ${falhas.length > 3 ? 'crit' : 'warn'}">
+      <span class="pi-icon">❌</span>
+      <div class="pi-text"><strong>${falhas.length} problema(s) sem solução confirmada</strong> — ${Math.round((falhas.length/total)*100)}% da base aguarda resolução documentada.</div>
+    </div>
+    <div class="pattern-item info">
+      <span class="pi-icon">📊</span>
+      <div class="pi-text"><strong>Categoria mais crítica: ${topCat?.[0] || '—'}</strong> — concentra ${topCat?.[1] || 0} ocorrências totais acumuladas.</div>
+    </div>`;
+
+  // Saúde
+  const taxa = Math.round((MOCK_BANCO.filter(r=>r.sucesso).length / total) * 100);
+  const saude = taxa >= 80 ? 'var(--green)' : taxa >= 60 ? 'var(--yellow)' : 'var(--red)';
+  document.getElementById('ins-saude').innerHTML = `
+    <div style="text-align:center;padding:16px 0">
+      <div style="font-family:var(--cond);font-size:56px;font-weight:800;color:${saude};line-height:1">${taxa}%</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px">Taxa de Sucesso Global</div>
+    </div>
+    <div class="rank-item">
+      <div class="ri-num">📦</div>
+      <div class="ri-text">Total de registros</div>
+      <div class="ri-val">${total}</div>
+    </div>
+    <div class="rank-item">
+      <div class="ri-num">✅</div>
+      <div class="ri-text">Confirmados</div>
+      <div class="ri-val" style="color:var(--green)">${MOCK_BANCO.filter(r=>r.sucesso).length}</div>
+    </div>
+    <div class="rank-item">
+      <div class="ri-num">❌</div>
+      <div class="ri-text">Sem confirmação</div>
+      <div class="ri-val" style="color:var(--red)">${falhas.length}</div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════
+   CONFIGURAÇÕES
+═══════════════════════════════════════════════════ */
+function loadConfigUI() {
+  document.getElementById('cfg-webhook').value = CFG.webhookUrl || '';
+  document.getElementById('cfg-aprender').value = CFG.aprenderUrl || '';
+  document.getElementById('cfg-freq').value = CFG.freqUrl || '';
+  document.getElementById('cfg-rec').value = CFG.limiRec;
+  document.getElementById('cfg-surto').value = CFG.limiSurto;
+  const demo = document.getElementById('toggle-demo');
+  if (CFG.demoMode) demo.classList.add('on'); else demo.classList.remove('on');
+}
+
+function salvarConfig() {
+  CFG.webhookUrl = document.getElementById('cfg-webhook').value.trim();
+  CFG.aprenderUrl = document.getElementById('cfg-aprender').value.trim();
+  CFG.freqUrl = document.getElementById('cfg-freq').value.trim();
+  CFG.limiRec = parseInt(document.getElementById('cfg-rec').value || '3');
+  CFG.limiSurto = parseInt(document.getElementById('cfg-surto').value || '5');
+  localStorage.setItem('cfg_webhook', CFG.webhookUrl);
+  localStorage.setItem('cfg_aprender', CFG.aprenderUrl);
+  localStorage.setItem('cfg_freq', CFG.freqUrl);
+  localStorage.setItem('cfg_rec', CFG.limiRec);
+  localStorage.setItem('cfg_surto', CFG.limiSurto);
+
+  const isDemo = document.getElementById('toggle-demo').classList.contains('on');
+  CFG.demoMode = isDemo;
+  localStorage.setItem('cfg_demo', String(!isDemo));
+
+  // Atualizar status
+  const modeEl = document.getElementById('st-mode-label');
+  const modeDot = document.getElementById('st-mode');
+  if (!isDemo && CFG.webhookUrl) {
+    modeEl.textContent = 'API Ativa';
+    modeDot.classList.remove('warn');
+    modeDot.classList.add('on');
+  } else {
+    modeEl.textContent = 'Modo Demo';
+    modeDot.classList.add('warn');
+    modeDot.classList.remove('on');
+  }
+
+  toast('Configuração salva!', 'success');
+}
+
+function toggleDemo(el) { el.classList.toggle('on'); }
+
+async function testarConexao() {
+  const url = document.getElementById('cfg-webhook').value.trim();
+  if (!url) { toast('Digite a URL do webhook primeiro.', 'warn'); return; }
+  toast('Testando conexão...', 'info', 2000);
+  try {
+    await fetch(url, { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({teste:true,problema:'teste de conexão'}), signal: AbortSignal.timeout(5000) });
+    toast('Webhook respondeu com sucesso!', 'success');
+    document.getElementById('st-webhook').classList.add('on');
+  } catch (e) {
+    toast('Falha na conexão. Verifique a URL e o n8n.', 'error', 5000);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   BUSCA GLOBAL
+═══════════════════════════════════════════════════ */
+document.getElementById('global-search').addEventListener('input', function() {
+  const q = this.value.trim();
+  if (q.length > 2) {
+    document.querySelector('[data-page="historico"]').click();
+    document.getElementById('hist-search').value = q;
+    filtrarHistorico();
+  }
+});
+
+/* ═══════════════════════════════════════════════════
+   REFRESH
+═══════════════════════════════════════════════════ */
+function refreshData() {
+  toast('Dashboard atualizado.', 'info', 1500);
+  renderDashboard();
+}
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+(function init() {
+  renderDashboard();
+  loadConfigUI();
+
+  // Enter para analisar
+  document.getElementById('inp-problema').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); analisarProblema(); }
+  });
+
+  // Auto-refresh a cada 30s
+  setInterval(() => {
+    if (document.getElementById('toggle-refresh')?.classList.contains('on')) {
+      renderDashboard();
+    }
+  }, 30000);
+
+  // Animar barras ao carregar
+  setTimeout(() => {
+    document.querySelectorAll('.cb-fill').forEach(el => {
+      el.style.width = el.dataset.w + '%';
+    });
+  }, 300);
+})();
+</script>
+</body>
+</html>
