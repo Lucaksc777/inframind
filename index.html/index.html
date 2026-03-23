@@ -1842,7 +1842,23 @@ async function analisarProblema() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ problema, descricao })
       });
-      if (res.ok) resultado = await res.json();
+      if (res.ok) {
+        const raw = await res.json();
+        // n8n pode retornar array com um item ou objeto direto
+        const data = Array.isArray(raw) ? raw[0] : raw;
+        // Normalizar campos obrigatórios
+        if (data && (data.sugestoes || data.stats)) {
+          resultado = {
+            sugestoes: data.sugestoes || [],
+            recorrente: data.recorrente || false,
+            surto_detectado: data.surto_detectado || false,
+            alertas: data.alertas || [],
+            alerta: data.alerta || null,
+            urgencia: data.urgencia || 'NORMAL',
+            stats: data.stats || { total_no_banco: 0, candidatos_analisados: 0 }
+          };
+        }
+      }
     } catch (e) {
       // CORS bloqueou — usa fallback local com dados reais do banco
     }
