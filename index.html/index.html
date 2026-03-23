@@ -1518,10 +1518,6 @@ body::before {
                 <input class="config-input" type="text" id="cfg-historico" style="width:100%"
                   placeholder="https://seu-n8n.app.n8n.cloud/webhook/historico">
               </div>
-              <div class="config-row">
-                <div><div class="cr-label">Modo Demo (Mock Data)</div><div class="cr-desc">Usa dados simulados quando API falha</div></div>
-                <div class="toggle" id="toggle-demo" onclick="toggleDemo(this)"></div>
-              </div>
               <button class="btn-save" onclick="salvarConfig()">Salvar Configuração</button>
             </div>
           </div>
@@ -1616,12 +1612,19 @@ body::before {
 /* ═══════════════════════════════════════════════════
    CONFIGURAÇÃO GLOBAL
 ═══════════════════════════════════════════════════ */
+const DEFAULTS = {
+  webhookUrl: 'https://n8n.solarinfo.com.br/webhook/inframind',
+  aprenderUrl: 'https://n8n.solarinfo.com.br/webhook/aprender',
+  freqUrl: 'https://n8n.solarinfo.com.br/webhook/atualizar-frequencia',
+  historicoUrl: 'https://n8n.solarinfo.com.br/webhook/historico',
+};
+
 const CFG = {
-  webhookUrl: localStorage.getItem('cfg_webhook') || '',
-  aprenderUrl: localStorage.getItem('cfg_aprender') || '',
-  freqUrl: localStorage.getItem('cfg_freq') || '',
-  historicoUrl: localStorage.getItem('cfg_historico') || '',
-  demoMode: localStorage.getItem('cfg_demo') === 'true',
+  webhookUrl: localStorage.getItem('cfg_webhook') || DEFAULTS.webhookUrl,
+  aprenderUrl: localStorage.getItem('cfg_aprender') || DEFAULTS.aprenderUrl,
+  freqUrl: localStorage.getItem('cfg_freq') || DEFAULTS.freqUrl,
+  historicoUrl: localStorage.getItem('cfg_historico') || DEFAULTS.historicoUrl,
+  demoMode: false,
   limiRec: parseInt(localStorage.getItem('cfg_rec') || '3'),
   limiSurto: parseInt(localStorage.getItem('cfg_surto') || '5'),
   sbUrl: localStorage.getItem('cfg_sb_url') || '',
@@ -1631,23 +1634,55 @@ const CFG = {
 // Banco de dados real (começa vazio, carregado do Supabase)
 let BANCO_REAL = [];
 
-// Buscar dados reais via n8n webhook
+// Buscar dados reais via n8n webhook (com fallback proxy CORS)
 async function carregarDoSupabase() {
   const url = CFG.historicoUrl || '';
   if (!url) return false;
+
+  // Tenta direto primeiro
   try {
-    const res = await fetch(url);
-    if (!res.ok) return false;
-    const json = await res.json();
-    const dados = json.dados || json;
-    if (Array.isArray(dados) && dados.length > 0) {
-      BANCO_REAL = dados;
-      localStorage.setItem('inframind_cache', JSON.stringify(dados));
-      localStorage.setItem('inframind_cache_ts', Date.now().toString());
-      return true;
+    const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+    if (res.ok) {
+      const json = await res.json();
+      const dados = json.dados || json;
+      if (Array.isArray(dados) && dados.length > 0) {
+        BANCO_REAL = dados;
+        localStorage.setItem('inframind_cache', JSON.stringify(dados));
+        localStorage.setItem('inframind_cache_ts', Date.now().toString());
+        atualizarStatusBar(true);
+        return true;
+      }
     }
-    return false;
-  } catch(e) { return false; }
+  } catch(e) { /* CORS bloqueou, tenta proxy */ }
+
+  // Proxy CORS como fallback
+  try {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl);
+    if (res.ok) {
+      const wrapper = await res.json();
+      const json = JSON.parse(wrapper.contents);
+      const dados = json.dados || json;
+      if (Array.isArray(dados) && dados.length > 0) {
+        BANCO_REAL = dados;
+        localStorage.setItem('inframind_cache', JSON.stringify(dados));
+        localStorage.setItem('inframind_cache_ts', Date.now().toString());
+        atualizarStatusBar(true);
+        return true;
+      }
+    }
+  } catch(e) { /* proxy falhou */ }
+
+  return false;
+}
+
+function atualizarStatusBar(ok) {
+  const dot = document.getElementById('st-webhook');
+  const dot2 = document.getElementById('st-supabase');
+  const pill = document.getElementById('pill-webhook');
+  if (dot) dot.className = 'status-dot ' + (ok ? 'on' : 'warn');
+  if (dot2) dot2.className = 'status-dot ' + (ok ? 'on' : 'warn');
+  if (pill) pill.textContent = ok ? 'Webhook Online' : 'Webhook (cache)';
 }
 
 // Retorna o banco ativo: real > cache > mock
@@ -1794,6 +1829,11 @@ async function analisarProblema() {
 
   let resultado = null;
 
+  // Se banco vazio, tenta carregar antes de analisar
+  if (getBanco() === MOCK_BANCO || getBanco().length === 0) {
+    await carregarDoSupabase();
+  }
+
   // Tentar API real do n8n
   if (CFG.webhookUrl) {
     try {
@@ -1802,13 +1842,13 @@ async function analisarProblema() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ problema, descricao })
       });
-      resultado = await res.json();
+      if (res.ok) resultado = await res.json();
     } catch (e) {
-      // Silencioso — vai usar fallback local
+      // CORS bloqueou — usa fallback local com dados reais do banco
     }
   }
 
-  // Sempre usa fallback local se API falhar ou não estiver configurada
+  // Fallback local (com dados reais se carregou acima)
   if (!resultado) {
     resultado = computarLocal(problema, descricao);
   }
@@ -2297,8 +2337,6 @@ function loadConfigUI() {
   document.getElementById('cfg-surto').value = CFG.limiSurto;
   document.getElementById('cfg-sb-url').value = CFG.sbUrl || '';
   document.getElementById('cfg-sb-key').value = CFG.sbKey || '';
-  const demo = document.getElementById('toggle-demo');
-  if (CFG.demoMode) demo.classList.add('on'); else demo.classList.remove('on');
 }
 
 function salvarConfig() {
@@ -2320,7 +2358,7 @@ function salvarConfig() {
   localStorage.setItem('cfg_sb_url', CFG.sbUrl);
   localStorage.setItem('cfg_sb_key', CFG.sbKey);
 
-  const isDemo = document.getElementById('toggle-demo').classList.contains('on');
+  const isDemo = false;
   CFG.demoMode = isDemo;
   localStorage.setItem('cfg_demo', String(isDemo));
 
@@ -2458,12 +2496,15 @@ function refreshData() {
   renderDashboard();
   loadConfigUI();
 
-  // Tenta atualizar do n8n em background (sem bloquear)
-  if (CFG.historicoUrl) {
-    carregarDoSupabase().then(ok => {
-      if (ok) renderDashboard();
-    });
-  }
+  // Carrega dados reais do n8n/Supabase (com proxy CORS como fallback)
+  carregarDoSupabase().then(ok => {
+    if (ok) {
+      renderDashboard();
+      toast(`✅ ${BANCO_REAL.length} registros carregados do banco`, 'success', 3000);
+    } else if (BANCO_REAL.length > 0) {
+      toast(`📦 Usando cache local (${BANCO_REAL.length} registros)`, 'info', 2500);
+    }
+  });
 
   // Enter para analisar
   document.getElementById('inp-problema').addEventListener('keydown', e => {
