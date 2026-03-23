@@ -1794,8 +1794,8 @@ async function analisarProblema() {
 
   let resultado = null;
 
-  // Tentar API real
-  if (CFG.webhookUrl && !CFG.demoMode) {
+  // Tentar API real do n8n
+  if (CFG.webhookUrl) {
     try {
       const res = await fetch(CFG.webhookUrl, {
         method: 'POST',
@@ -1804,13 +1804,12 @@ async function analisarProblema() {
       });
       resultado = await res.json();
     } catch (e) {
-      toast('API indisponível — usando dados locais.', 'warn');
+      // Silencioso — vai usar fallback local
     }
   }
 
-  // Fallback local
+  // Sempre usa fallback local se API falhar ou não estiver configurada
   if (!resultado) {
-    await new Promise(r => setTimeout(r, 900)); // simula latência
     resultado = computarLocal(problema, descricao);
   }
 
@@ -1887,7 +1886,7 @@ function computarLocal(problema, descricao) {
     alertas,
     alerta: surto ? alertas[alertas.length-1]?.mensagem : recorrente ? alertas[0]?.mensagem : null,
     urgencia: surto ? 'CRÍTICO' : recorrente ? 'ALTO' : 'NORMAL',
-    stats: { total_no_banco: MOCK_BANCO.length, candidatos_analisados: candidatos.length }
+    stats: { total_no_banco: getBanco().length, candidatos_analisados: candidatos.length }
   };
 }
 
