@@ -1655,7 +1655,10 @@ function getBanco() {
   if (BANCO_REAL.length > 0) return BANCO_REAL;
   const cache = localStorage.getItem('inframind_cache');
   if (cache) {
-    try { return JSON.parse(cache); } catch(e) {}
+    try {
+      const parsed = JSON.parse(cache);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch(e) {}
   }
   return MOCK_BANCO;
 }
@@ -1974,36 +1977,33 @@ async function registrarAprendizado() {
 
   if (!solucao) { toast('Digite a solução aplicada.', 'warn'); return; }
 
-  // Tentar API
-  let ok = false;
-  if (CFG.aprenderUrl && !CFG.demoMode) {
+  // Montar novo registro
+  const novoReg = {
+    id: String(Date.now()), problema, categoria, solucao, sucesso,
+    frequencia: 1, data: new Date().toISOString(), origem: 'usuario'
+  };
+
+  // Tentar salvar no Supabase via n8n
+  let salvoNoBanco = false;
+  if (CFG.aprenderUrl) {
     try {
       const res = await fetch(CFG.aprenderUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ problema, solucao, sucesso, categoria })
       });
-      ok = res.ok;
+      salvoNoBanco = res.ok;
     } catch (e) {}
   }
 
-  if (!ok) {
-    // Mock: adicionar ao banco local e ao cache
-    const novoReg = {
-      id: String(Date.now()), problema, categoria, solucao, sucesso,
-      frequencia: 1, data: new Date().toISOString(), origem: 'usuario'
-    };
-    MOCK_BANCO.push(novoReg);
-    if (BANCO_REAL.length > 0) BANCO_REAL.push(novoReg);
-    // Atualiza cache
-    const cache = getBanco();
-    localStorage.setItem('inframind_cache', JSON.stringify(cache));
-  } else {
-    // Recarregar do Supabase após inserir
-    await carregarDoSupabase();
-  }
+  // Sempre adiciona localmente para funcionar imediatamente
+  MOCK_BANCO.push(novoReg);
+  if (BANCO_REAL.length > 0) BANCO_REAL.push(novoReg);
 
-  toast('Sistema aprendeu! Dados registrados com sucesso.', 'success');
+  // Sempre salva no cache para persistir entre sessões
+  localStorage.setItem('inframind_cache', JSON.stringify(getBanco()));
+
+  toast(salvoNoBanco ? '✅ Salvo no banco e no cache!' : '✅ Salvo localmente! (banco indisponível)', 'success');
   document.getElementById('inp-solucao-aprender').value = '';
   document.getElementById('aprender-box').style.display = 'none';
   renderDashboard();
@@ -2445,15 +2445,26 @@ function refreshData() {
 (function init() {
   verificarSessao();
 
-  // Carregar dados via n8n se configurado
+  // Carrega cache imediatamente (funciona offline)
+  const cache = localStorage.getItem('inframind_cache');
+  if (cache) {
+    try {
+      const parsed = JSON.parse(cache);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        BANCO_REAL = parsed;
+      }
+    } catch(e) {}
+  }
+
+  renderDashboard();
+  loadConfigUI();
+
+  // Tenta atualizar do n8n em background (sem bloquear)
   if (CFG.historicoUrl) {
     carregarDoSupabase().then(ok => {
       if (ok) renderDashboard();
     });
   }
-
-  renderDashboard();
-  loadConfigUI();
 
   // Enter para analisar
   document.getElementById('inp-problema').addEventListener('keydown', e => {
