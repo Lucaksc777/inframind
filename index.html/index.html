@@ -945,6 +945,335 @@ body::before {
 #results-section { display: none; }
 #results-section.visible { display: block; }
 
+/* ════════════════════════════════════════════
+   TUTORIALHUB PAGE
+════════════════════════════════════════════ */
+.th-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 24px 0;
+  flex-wrap: wrap;
+}
+.th-search-wrap { flex: 1; max-width: 320px; position: relative; }
+.th-search-wrap input {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 12px 7px 30px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s;
+}
+.th-search-wrap input::placeholder { color: var(--text3); }
+.th-search-wrap input:focus { border-color: var(--blue); }
+.th-search-icon {
+  position: absolute;
+  left: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--text3);
+  pointer-events: none;
+}
+.th-select {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+.th-select:focus { border-color: var(--blue); }
+.th-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 16px 24px;
+}
+.th-stat {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+.th-stat::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 0 0 8px 8px;
+}
+.th-stat.blue::after { background: linear-gradient(90deg, transparent, var(--blue), transparent); }
+.th-stat.cyan::after { background: linear-gradient(90deg, transparent, var(--cyan), transparent); }
+.th-stat.green::after { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+.th-stat.yellow::after { background: linear-gradient(90deg, transparent, var(--yellow), transparent); }
+.th-stat-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+.th-stat-val {
+  font-family: var(--cond);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+.th-stat-val.blue { color: var(--blue); }
+.th-stat-val.cyan { color: var(--cyan); }
+.th-stat-val.green { color: var(--green); }
+.th-stat-val.yellow { color: var(--yellow); }
+.th-res-count {
+  padding: 6px 24px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+}
+.th-grid { padding: 0 24px 24px; display: flex; flex-direction: column; gap: 10px; }
+/* Cada card horizontal */
+.th-card {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  transition: border-color .2s, transform .2s;
+  min-height: 170px;
+}
+.th-card:hover { border-color: var(--line2); transform: translateY(-1px); }
+.th-thumb {
+  width: 260px;
+  min-width: 260px;
+  flex-shrink: 0;
+  background: var(--bg4);
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+.th-thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .3s;
+}
+.th-thumb:hover img { transform: scale(1.05); }
+.th-thumb-ph {
+  position: absolute; inset: 0;
+  display: none;
+  align-items: center; justify-content: center;
+  background: var(--bg4);
+}
+.th-play-ov {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0);
+  transition: background .2s;
+  pointer-events: none;
+}
+.th-thumb:hover .th-play-ov { background: rgba(0,0,0,.5); }
+.th-play-btn {
+  width: 52px; height: 52px;
+  background: rgba(45,140,240,.9);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transform: scale(.7);
+  transition: all .2s;
+  font-size: 20px;
+  padding-left: 4px;
+}
+.th-thumb:hover .th-play-btn { opacity: 1; transform: scale(1); }
+.th-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.th-theme-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--yellow);
+  background: rgba(255,184,0,.1);
+  border: 1px solid rgba(255,184,0,.2);
+  padding: 2px 9px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  width: fit-content;
+}
+.th-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.th-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.th-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+}
+.tht-n8n { background: rgba(45,140,240,.15); color: var(--blue); }
+.tht-ai { background: rgba(168,85,247,.15); color: #c084fc; }
+.tht-auto { background: var(--green-dim); color: var(--green); }
+.tht-drive { background: rgba(255,184,0,.12); color: var(--yellow); }
+.tht-api { background: var(--cyan-dim); color: var(--cyan); }
+.tht-excel { background: var(--green-dim); color: var(--green); }
+.tht-bi { background: rgba(255,184,0,.12); color: var(--yellow); }
+.tht-default { background: var(--bg4); color: var(--text3); }
+.th-desc {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+  flex: 1;
+  margin-bottom: 12px;
+}
+.th-desc-el { /* replaced dynamically */ }
+.th-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  margin-top: auto;
+}
+.th-date {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+}
+.th-actions { display: flex; gap: 6px; align-items: center; }
+.btn-watch {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--blue);
+  color: #fff;
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-watch:hover { background: var(--blue2); transform: translateY(-1px); }
+.btn-edit-th {
+  display: flex; align-items: center; gap: 4px;
+  background: transparent;
+  border: 1px solid var(--line2);
+  color: var(--text2);
+  font-family: var(--cond);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-edit-th:hover { border-color: var(--blue); color: var(--blue); }
+.btn-drive-link {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--text3);
+  text-decoration: none;
+  font-size: 13px;
+  transition: all .15s;
+}
+.btn-drive-link:hover { border-color: var(--line2); color: var(--text2); }
+/* Edit modal */
+#th-edit-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.8);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 9997;
+  backdrop-filter: blur(4px);
+}
+#th-edit-modal.open { display: flex; }
+.th-modal-box {
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 520px;
+  animation: fadeIn .25s ease;
+}
+.th-modal-title {
+  font-family: var(--cond);
+  font-size: 18px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 4px;
+}
+.th-modal-sub {
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 18px;
+  word-break: break-word;
+}
+.th-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+.btn-modal-cancel {
+  background: var(--bg3);
+  border: 1px solid var(--line);
+  color: var(--text2);
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-modal-cancel:hover { border-color: var(--line2); color: var(--text); }
+.btn-modal-save {
+  background: var(--blue);
+  border: none;
+  color: #fff;
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 8px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-modal-save:hover { background: var(--blue2); }
+@media(max-width:900px) {
+  .th-card { flex-direction: column; min-height: unset; }
+  .th-thumb { width: 100%; min-width: unset; aspect-ratio: 16/9; }
+  .th-stats { grid-template-columns: repeat(2,1fr); }
+}
+
 /* Aprender form */
 .aprender-mini {
   margin-top: 12px;
@@ -1174,6 +1503,11 @@ body::before {
     </div>
     <div class="nav-item" data-page="insights">
       <span class="nav-icon">📈</span> Insights
+    </div>
+
+    <div class="sidebar-section">TutorialHub</div>
+    <div class="nav-item" data-page="tutorialhub">
+      <span class="nav-icon">▶️</span> Tutoriais
     </div>
 
     <div class="sidebar-section">Sistema</div>
@@ -1601,9 +1935,76 @@ body::before {
         </div>
       </div>
 
+      <!-- ░░░ TUTORIALHUB ░░░ -->
+      <div class="page" id="page-tutorialhub">
+
+        <!-- Stats -->
+        <div class="th-stats" id="th-stats-row">
+          <div class="th-stat blue">
+            <div class="th-stat-label">Total de Tutoriais</div>
+            <div class="th-stat-val blue" id="th-stat-total">—</div>
+          </div>
+          <div class="th-stat yellow">
+            <div class="th-stat-label">Temas</div>
+            <div class="th-stat-val yellow" id="th-stat-temas">—</div>
+          </div>
+          <div class="th-stat cyan">
+            <div class="th-stat-label">Esta Semana</div>
+            <div class="th-stat-val cyan" id="th-stat-semana">—</div>
+          </div>
+          <div class="th-stat green">
+            <div class="th-stat-label">Backup Google Sheets</div>
+            <div class="th-stat-val green" style="font-size:16px;margin-top:4px">Sheets ✓</div>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="th-toolbar">
+          <div class="th-search-wrap">
+            <span class="th-search-icon">🔎</span>
+            <input type="search" id="th-search" placeholder="Buscar tutoriais..." autocomplete="off" oninput="thFilter()"/>
+          </div>
+          <select class="th-select" id="th-theme-sel" onchange="thFilter()">
+            <option value="">Todos os temas</option>
+          </select>
+          <select class="th-select" id="th-sort-sel" onchange="thFilter()">
+            <option value="newest">Mais recentes</option>
+            <option value="oldest">Mais antigos</option>
+            <option value="alpha">A → Z</option>
+            <option value="theme">Por tema</option>
+          </select>
+        </div>
+
+        <div class="th-res-count" id="th-res-count"></div>
+        <div class="th-grid" id="th-grid">
+          <div class="empty-state">
+            <div class="empty-icon">▶️</div>
+            <div class="empty-title">Nenhum tutorial carregado</div>
+            <div class="empty-sub">Configure a URL do workflow do TutorialHub nas Configurações</div>
+          </div>
+        </div>
+
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
+
+<!-- TutorialHub Edit Modal -->
+<div id="th-edit-modal">
+  <div class="th-modal-box">
+    <div class="th-modal-title">✏️ Editar Resumo</div>
+    <div class="th-modal-sub" id="th-modal-name"></div>
+    <div class="form-group">
+      <label class="form-label">Resumo do Tutorial</label>
+      <textarea class="form-input" id="th-modal-ta" rows="4" placeholder="Descreva o que é ensinado neste tutorial..."></textarea>
+    </div>
+    <div class="th-modal-actions">
+      <button class="btn-modal-cancel" onclick="thCloseEdit()">Cancelar</button>
+      <button class="btn-modal-save" onclick="thSaveEdit()">✓ Salvar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Toast container -->
 <div class="toast-container" id="toasts"></div>
@@ -1726,7 +2127,8 @@ const PAGE_TITLES = {
   analise: 'Análise de Problemas',
   historico: 'Histórico',
   insights: 'Insights',
-  config: 'Configurações'
+  config: 'Configurações',
+  tutorialhub: 'TutorialHub — Catálogo de Tutoriais'
 };
 
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -1740,6 +2142,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     if (page === 'historico') renderHistorico();
     if (page === 'insights') renderInsights();
     if (page === 'config') loadConfigUI();
+    if (page === 'tutorialhub') thInit();
   });
 });
 
@@ -2541,6 +2944,363 @@ function refreshData() {
     });
   }, 300);
 })();
+
+/* ═══════════════════════════════════════════════════
+   TUTORIALHUB MODULE
+   Integra com o workflow n8n exatamente como o painel
+   HTML original — recebe rows com fileId, fileName,
+   theme, previewLink, driveLink, description, timestamp
+═══════════════════════════════════════════════════ */
+(function() {
+'use strict';
+
+// ── DADOS ──
+// TH_CARDS é preenchido pelo workflow n8n (via thLoadFromN8n)
+// ou pelo staticData do workflow original.
+// Aqui também mantemos cache local como o InfraMind faz.
+let TH_CARDS = [];
+let thInited  = false;
+let thEditing = null;
+
+// ── UTILITÁRIOS ── (idênticos ao workflow original)
+function thEsc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function thCleanTitle(name) {
+  return name
+    .replace(/\.[^.]+$/, '')
+    .replace(/cópia de\s*/gi, '')
+    .replace(/copia de\s*/gi, '')
+    .replace(/\d{4}-\d{2}-\d{2}/g, '')
+    .replace(/\d{2}-\d{2}-\d{2}/g, '')
+    .replace(/\b(tutorial|aula|video|vídeo|básica|basica)\b/gi, '')
+    .replace(/[\s_\-—–]+/g, ' ')
+    .trim();
+}
+const TH_TAG_MAP = [
+  { words:['n8n','workflow'],            cls:'tht-n8n',   label:'n8n' },
+  { words:['drive','google'],            cls:'tht-drive',  label:'Google Drive' },
+  { words:['bi','power bi','dashboard'], cls:'tht-bi',     label:'BI' },
+  { words:['excel','planilha'],          cls:'tht-excel',  label:'Excel' },
+  { words:[' ia ','openai','gpt','llm'], cls:'tht-ai',     label:'IA' },
+  { words:['api','http','webhook'],      cls:'tht-api',    label:'API' },
+  { words:['automação','automacao'],     cls:'tht-auto',   label:'automação' },
+];
+
+function thBuildCard(row) {
+  const rawName = row.fileName || 'Sem título';
+  const theme   = row.theme || '';
+  const nameLow = ' ' + rawName.toLowerCase() + ' ' + theme.toLowerCase() + ' ';
+  const tags = [];
+  if (theme) tags.push({ cls:'tht-drive', label: theme }); // tema vira tag amarela
+  for (const e of TH_TAG_MAP) {
+    if (e.words.some(w => nameLow.includes(w))) tags.push({ cls: e.cls, label: e.label });
+    if (tags.length >= 3) break;
+  }
+  if (tags.length === 0) tags.push({ cls:'tht-default', label:'tutorial' });
+  return {
+    fileId:      row.fileId      || '',
+    fileName:    thCleanTitle(rawName),
+    theme:       theme,
+    previewLink: row.previewLink || '#',
+    driveLink:   row.driveLink   || '#',
+    description: row.description || 'Tutorial adicionado automaticamente.',
+    tagsHtml:    tags.map(t => `<span class="th-tag ${t.cls}">${t.label}</span>`).join(''),
+    timestamp:   row.timestamp   || ''
+  };
+}
+
+// ── FONTE DE DADOS ──
+// O painel lê de um webhook GET dedicado no n8n
+// que lê o Sheets e devolve JSON.
+// URL padrão: https://n8n.solarinfo.com.br/webhook/tutoriais-json
+function thJsonUrl() {
+  return localStorage.getItem('cfg_th_json_url') || 'https://n8n.solarinfo.com.br/webhook/tutoriais-json';
+}
+
+async function thLoadData() {
+  const url = thJsonUrl();
+
+  // Tenta direto (sem proxy)
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(8000)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const rows = Array.isArray(data) ? data : (data.rows || data.cards || data.tutoriais || []);
+      if (rows.length > 0 && rows[0].fileId) {
+        TH_CARDS = rows.filter(r => r.fileId).map(thBuildCard).reverse();
+        localStorage.setItem('th_cache', JSON.stringify(TH_CARDS));
+        return true;
+      }
+    }
+  } catch(e) {}
+
+  // Fallback: proxy allorigins
+  try {
+    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxy, { signal: AbortSignal.timeout(10000) });
+    if (res.ok) {
+      const w = await res.json();
+      const data = JSON.parse(w.contents);
+      const rows = Array.isArray(data) ? data : (data.rows || data.cards || data.tutoriais || []);
+      if (rows.length > 0 && rows[0].fileId) {
+        TH_CARDS = rows.filter(r => r.fileId).map(thBuildCard).reverse();
+        localStorage.setItem('th_cache', JSON.stringify(TH_CARDS));
+        return true;
+      }
+    }
+  } catch(e) {}
+
+  return false;
+}
+
+// ── INIT ──
+window.thInit = async function() {
+  if (thInited) { thRender(TH_CARDS); return; }
+  thInited = true;
+
+  // 1. Cache imediato
+  const cache = localStorage.getItem('th_cache');
+  if (cache) {
+    try {
+      const parsed = JSON.parse(cache);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        TH_CARDS = parsed;
+        thRender(TH_CARDS);
+        thUpdateStats(TH_CARDS);
+        toast(`📦 Cache: ${TH_CARDS.length} tutoriais (atualizando...)`, 'info', 2000);
+      }
+    } catch(e) {}
+  }
+
+  // 2. Carrega do webhook JSON
+  const ok = await thLoadData();
+  if (ok) {
+    thRender(TH_CARDS);
+    thUpdateStats(TH_CARDS);
+    toast(`✅ ${TH_CARDS.length} tutoriais carregados`, 'success', 3000);
+  } else if (TH_CARDS.length > 0) {
+    toast(`📦 Usando cache local (${TH_CARDS.length} itens)`, 'info', 2500);
+  } else {
+    document.getElementById('th-grid').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">⚙️</div>
+        <div class="empty-title">Webhook JSON não respondeu</div>
+        <div class="empty-sub">Importe o workflow <strong>tutoriais-json.json</strong> no n8n e ative-o. URL esperada: <span style="color:var(--cyan);font-family:var(--mono)">https://n8n.solarinfo.com.br/webhook/tutoriais-json</span></div>
+      </div>`;
+  }
+};
+
+// ── STATS ──
+function thUpdateStats(cards) {
+  const total  = cards.length;
+  const themes = new Set(cards.map(c => c.theme).filter(Boolean)).size;
+  const weekMs = Date.now() - 7*24*60*60*1000;
+  const week   = cards.filter(c => new Date(c.timestamp||0).getTime() > weekMs).length;
+  document.getElementById('th-stat-total').textContent  = total;
+  document.getElementById('th-stat-temas').textContent  = themes;
+  document.getElementById('th-stat-semana').textContent = week;
+
+  // Popula select de temas
+  const sel = document.getElementById('th-theme-sel');
+  const cur = sel.value;
+  // Remove opções antigas (mantém "Todos")
+  while (sel.options.length > 1) sel.remove(1);
+  [...new Set(cards.map(c => c.theme).filter(Boolean))].sort().forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    if (t === cur) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ── RENDER ──
+function thRender(cards) {
+  const grid  = document.getElementById('th-grid');
+  const count = document.getElementById('th-res-count');
+  if (!grid) return;
+
+  if (!cards.length) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">▶️</div>
+        <div class="empty-title">Nenhum tutorial encontrado</div>
+        <div class="empty-sub">Ajuste os filtros ou envie vídeos para a pasta Tutoriais no Google Drive.</div>
+      </div>`;
+    if (count) count.textContent = '0 tutoriais';
+    return;
+  }
+
+  if (count) count.textContent = `${cards.length} tutorial${cards.length!==1?'is':''} encontrado${cards.length!==1?'s':''}`;
+
+  grid.innerHTML = cards.map(c => {
+    let ds = '—';
+    if (c.timestamp) {
+      try { ds = new Date(c.timestamp).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}); } catch(e) {}
+    }
+    const thumb = `https://drive.google.com/thumbnail?id=${c.fileId}&sz=w640`;
+    const safe  = c.fileName.replace(/'/g,"\\'");
+    return `
+    <div class="th-card" data-id="${c.fileId}" data-theme="${thEsc(c.theme)}" data-ts="${c.timestamp}">
+      <div class="th-thumb" onclick="window.open('${c.previewLink}','_blank')">
+        <img src="${thumb}" alt="${thEsc(c.fileName)}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+        <div class="th-thumb-ph" style="display:none">▶️</div>
+        <div class="th-play-ov"><div class="th-play-btn">▶</div></div>
+      </div>
+      <div class="th-body">
+        ${c.theme ? `<div class="th-theme-pill">📁 ${thEsc(c.theme)}</div>` : ''}
+        <div class="th-title" id="thtitle-${c.fileId}">${thEsc(c.fileName)}</div>
+        <div class="th-tags">${c.tagsHtml}</div>
+        <div class="th-desc" id="thdesc-${c.fileId}">${thEsc(c.description)}</div>
+        <div class="th-foot">
+          <span class="th-date">🗓 ${ds}</span>
+          <div class="th-actions">
+            <button class="btn-watch" onclick="window.open('${c.previewLink}','_blank')">▶ Assistir</button>
+            <button class="btn-edit-th" onclick="thOpenEdit('${c.fileId}','${safe}')">✏ Editar</button>
+            <a class="btn-drive-link" href="${c.driveLink}" target="_blank" rel="noopener" title="Abrir no Drive">↗</a>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('\n');
+}
+
+// ── FILTRO/ORDENAÇÃO ──
+window.thFilter = function() {
+  const q     = (document.getElementById('th-search')?.value || '').toLowerCase();
+  const theme = document.getElementById('th-theme-sel')?.value || '';
+  const sort  = document.getElementById('th-sort-sel')?.value || 'newest';
+
+  let list = TH_CARDS.filter(c => {
+    const hay = (c.fileName + ' ' + c.description + ' ' + c.theme).toLowerCase();
+    return (!q || hay.includes(q)) && (!theme || c.theme === theme);
+  });
+
+  list.sort((a, b) => {
+    if (sort === 'alpha')  return a.fileName.localeCompare(b.fileName, 'pt-BR');
+    if (sort === 'theme')  return (a.theme||'').localeCompare(b.theme||'', 'pt-BR');
+    const da = new Date(a.timestamp||0).getTime();
+    const db = new Date(b.timestamp||0).getTime();
+    return sort === 'oldest' ? da - db : db - da;
+  });
+
+  thRender(list);
+};
+
+// ── EDITAR DESCRIÇÃO ──
+window.thOpenEdit = function(id, name) {
+  thEditing = id;
+  const cur = document.getElementById('thdesc-' + id);
+  document.getElementById('th-modal-name').textContent = name;
+  document.getElementById('th-modal-ta').value = cur ? cur.textContent : '';
+  document.getElementById('th-edit-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('th-modal-ta').focus(), 100);
+};
+
+window.thCloseEdit = function() {
+  document.getElementById('th-edit-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  thEditing = null;
+};
+
+window.thSaveEdit = function() {
+  if (!thEditing) return;
+  const val = document.getElementById('th-modal-ta').value.trim();
+  const el  = document.getElementById('thdesc-' + thEditing);
+  if (el) el.textContent = val || '—';
+
+  // Atualiza no array em memória e cache
+  const card = TH_CARDS.find(c => c.fileId === thEditing);
+  if (card) {
+    card.description = val || '—';
+    localStorage.setItem('th_cache', JSON.stringify(TH_CARDS));
+  }
+
+  thCloseEdit();
+  toast('Resumo atualizado!', 'success');
+};
+
+// Fecha modal ao clicar no backdrop
+document.getElementById('th-edit-modal').addEventListener('click', function(e) {
+  if (e.target === this) thCloseEdit();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && document.getElementById('th-edit-modal').classList.contains('open')) thCloseEdit();
+});
+
+// ── ADICIONAR CAMPO NA CONFIG ──
+// Injeta campo de configuração do TutorialHub na página de Configurações
+(function injectThConfig() {
+  const tryInject = () => {
+    const cfgGrid = document.querySelector('.config-grid');
+    if (!cfgGrid) { setTimeout(tryInject, 200); return; }
+    if (document.getElementById('cfg-th-json-url')) return;
+
+    const sec = document.createElement('div');
+    sec.className = 'config-section';
+    sec.innerHTML = `
+      <div class="cs-head">▶️ TutorialHub — Webhook JSON</div>
+      <div class="cs-body">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);line-height:1.9;margin-bottom:12px;padding:8px 10px;background:var(--bg3);border-radius:4px;border-left:3px solid var(--cyan)">
+          Importe o arquivo <strong style="color:var(--text)">tutoriais-json.json</strong> no n8n e ative o workflow.<br>
+          Ele cria um GET <span style="color:var(--cyan)">/webhook/tutoriais-json</span> que lê o Sheets e devolve JSON.
+        </div>
+        <div class="form-group">
+          <label class="form-label">URL do Webhook GET (retorna JSON)</label>
+          <input class="config-input" type="text" id="cfg-th-json-url" style="width:100%"
+            placeholder="https://n8n.solarinfo.com.br/webhook/tutoriais-json"
+            value="${localStorage.getItem('cfg_th_json_url') || 'https://n8n.solarinfo.com.br/webhook/tutoriais-json'}">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-save" onclick="thSalvarConfig()">Salvar URL</button>
+          <button class="btn-save" style="background:var(--bg4);color:var(--text2)" onclick="thRecarregar()">↺ Recarregar</button>
+          <button class="btn-save" style="background:var(--bg4);color:var(--text2)" onclick="thLimparCache()">Limpar Cache</button>
+        </div>
+      </div>`;
+    cfgGrid.appendChild(sec);
+  };
+  tryInject();
+})();
+
+window.thSalvarConfig = function() {
+  const url = document.getElementById('cfg-th-json-url')?.value.trim() || '';
+  if (url) localStorage.setItem('cfg_th_json_url', url);
+  thInited = false;
+  toast('URL do TutorialHub salva!', 'success');
+};
+
+window.thRecarregar = async function() {
+  thInited = false;
+  TH_CARDS = [];
+  localStorage.removeItem('th_cache');
+  toast('Recarregando...', 'info', 1500);
+  const ok = await thLoadData();
+  if (ok) {
+    // Se estiver na página tutoriais, re-renderiza
+    if (document.getElementById('page-tutorialhub')?.classList.contains('active')) {
+      thRender(TH_CARDS);
+      thUpdateStats(TH_CARDS);
+    }
+    toast(`✅ ${TH_CARDS.length} tutoriais carregados!`, 'success', 3000);
+  } else {
+    toast('Não respondeu. Verifique a URL e se o workflow está ativo.', 'error', 5000);
+  }
+};
+
+window.thLimparCache = function() {
+  localStorage.removeItem('th_cache');
+  TH_CARDS = [];
+  thInited = false;
+  toast('Cache do TutorialHub limpo!', 'success');
+};
+
+})(); // fim IIFE TutorialHub
 </script>
 </body>
 </html>
